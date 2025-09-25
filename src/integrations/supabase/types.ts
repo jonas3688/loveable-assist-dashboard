@@ -196,13 +196,18 @@ export type Database = {
       }
       chamados_ti: {
         Row: {
+          anexos: Json | null
+          assigned_func_ti_id: number | null
           created_at: string | null
           departamento: string | null
           descricao_problema: string | null
           email: string | null
+          funcionario_id: number | null
           id_chamado: number
           loja: string | null
+          loja_id: number | null
           nome_funcionario: string | null
+          prioridade: string | null
           session_id: string
           solucao_aplicada: string | null
           status: string
@@ -212,13 +217,18 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          anexos?: Json | null
+          assigned_func_ti_id?: number | null
           created_at?: string | null
           departamento?: string | null
           descricao_problema?: string | null
           email?: string | null
+          funcionario_id?: number | null
           id_chamado?: never
           loja?: string | null
+          loja_id?: number | null
           nome_funcionario?: string | null
+          prioridade?: string | null
           session_id: string
           solucao_aplicada?: string | null
           status?: string
@@ -228,13 +238,18 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          anexos?: Json | null
+          assigned_func_ti_id?: number | null
           created_at?: string | null
           departamento?: string | null
           descricao_problema?: string | null
           email?: string | null
+          funcionario_id?: number | null
           id_chamado?: never
           loja?: string | null
+          loja_id?: number | null
           nome_funcionario?: string | null
+          prioridade?: string | null
           session_id?: string
           solucao_aplicada?: string | null
           status?: string
@@ -243,7 +258,47 @@ export type Database = {
           tentativas_ia?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chamados_ti_assigned_func_ti_id_fkey"
+            columns: ["assigned_func_ti_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios_ti"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chamados_ti_historico: {
+        Row: {
+          actor: string
+          chamado_id: number
+          created_at: string
+          id: number
+          message: string
+        }
+        Insert: {
+          actor: string
+          chamado_id: number
+          created_at?: string
+          id?: never
+          message: string
+        }
+        Update: {
+          actor?: string
+          chamado_id?: number
+          created_at?: string
+          id?: never
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamados_ti_historico_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados_ti"
+            referencedColumns: ["id_chamado"]
+          },
+        ]
       }
       clientes: {
         Row: {
@@ -478,6 +533,59 @@ export type Database = {
         }
         Relationships: []
       }
+      funcionarios: {
+        Row: {
+          departamento: string | null
+          email: string | null
+          id: number
+          loja_id: number | null
+          nome: string
+          quantidade_chamados: number
+          telefone: string | null
+        }
+        Insert: {
+          departamento?: string | null
+          email?: string | null
+          id?: number
+          loja_id?: number | null
+          nome: string
+          quantidade_chamados?: number
+          telefone?: string | null
+        }
+        Update: {
+          departamento?: string | null
+          email?: string | null
+          id?: number
+          loja_id?: number | null
+          nome?: string
+          quantidade_chamados?: number
+          telefone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funcionarios_ti: {
+        Row: {
+          id: number
+          nome: string
+        }
+        Insert: {
+          id?: number
+          nome: string
+        }
+        Update: {
+          id?: number
+          nome?: string
+        }
+        Relationships: []
+      }
       historico_chat: {
         Row: {
           id: number
@@ -547,6 +655,21 @@ export type Database = {
           status_lead?: string
           ultimo_contato_bot?: string | null
           ultimo_contato_cliente?: string | null
+        }
+        Relationships: []
+      }
+      lojas: {
+        Row: {
+          id: number
+          nome: string
+        }
+        Insert: {
+          id?: number
+          nome: string
+        }
+        Update: {
+          id?: number
+          nome?: string
         }
         Relationships: []
       }
