@@ -710,37 +710,37 @@ export const ChamadoVisualizacao = ({
                   </div>
 
                   {/* Só depois de atribuir técnico, liberar botão de iniciar */}
-                  <div className="flex gap-3">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          className="bg-gradient-primary hover:shadow-hover transition-all"
-                          disabled={!chamado.assigned_func_ti_id}
-                        >
-                          <Play className="w-4 h-4 mr-2" />
-                          Iniciar Atendimento
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Iniciar atendimento agora?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Você assumirá o atendimento deste chamado e ele será marcado como "Em Atendimento".
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => iniciarAtendimentoMutation.mutate()}
-                            disabled={iniciarAtendimentoMutation.isPending}
+                  {chamado.assigned_func_ti_id && (
+                    <div className="flex gap-3">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            className="bg-gradient-primary hover:shadow-hover transition-all"
                           >
-                            {iniciarAtendimentoMutation.isPending ? "Iniciando..." : "Sim, iniciar"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-
-                  </div>
+                            <Play className="w-4 h-4 mr-2" />
+                            Iniciar Atendimento
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Iniciar atendimento agora?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Você assumirá o atendimento deste chamado e ele será marcado como "Em Atendimento".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => iniciarAtendimentoMutation.mutate()}
+                              disabled={iniciarAtendimentoMutation.isPending}
+                            >
+                              {iniciarAtendimentoMutation.isPending ? "Iniciando..." : "Sim, iniciar"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
