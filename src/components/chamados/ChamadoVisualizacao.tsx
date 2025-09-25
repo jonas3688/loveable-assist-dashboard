@@ -546,7 +546,8 @@ export const ChamadoVisualizacao = ({
                     value={solucaoAplicada}
                     onChange={(e) => setSolucaoAplicada(e.target.value)}
                     className="min-h-[100px]"
-                    disabled={chamado.status === "resolvido" || chamado.status === "fechado"}
+                    disabled={chamado.status === "resolvido" || chamado.status === "fechado" || chamado.status === "resolvido_pela_ia"}
+                    readOnly={chamado.status === "resolvido" || chamado.status === "fechado" || chamado.status === "resolvido_pela_ia"}
                   />
                 </CardContent>
               </Card>
@@ -684,6 +685,31 @@ export const ChamadoVisualizacao = ({
                   <CardTitle className="text-lg">Iniciar Atendimento</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Primeiro atribuir técnico */}
+                  <div className="flex gap-2">
+                    <Select value={tecnicoSelecionado} onValueChange={setTecnicoSelecionado}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Selecionar técnico" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tecnicos?.map((tecnico) => (
+                          <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
+                            {tecnico.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={() => atribuirTecnicoMutation.mutate(parseInt(tecnicoSelecionado))}
+                      disabled={!tecnicoSelecionado || atribuirTecnicoMutation.isPending}
+                    >
+                      <UserCog className="w-4 h-4 mr-2" />
+                      Atribuir
+                    </Button>
+                  </div>
+
+                  {/* Só depois de atribuir técnico, liberar botão de iniciar */}
                   <div className="flex gap-3">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -714,28 +740,6 @@ export const ChamadoVisualizacao = ({
                       </AlertDialogContent>
                     </AlertDialog>
 
-                    <div className="flex gap-2">
-                      <Select value={tecnicoSelecionado} onValueChange={setTecnicoSelecionado}>
-                        <SelectTrigger className="w-48">
-                          <SelectValue placeholder="Selecionar técnico" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tecnicos?.map((tecnico) => (
-                            <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
-                              {tecnico.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="outline"
-                        onClick={() => atribuirTecnicoMutation.mutate(parseInt(tecnicoSelecionado))}
-                        disabled={!tecnicoSelecionado || atribuirTecnicoMutation.isPending}
-                      >
-                        <UserCog className="w-4 h-4 mr-2" />
-                        Atribuir
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
