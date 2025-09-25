@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -37,9 +37,24 @@ export const HistoricoCompleto = () => {
     loja: "todas",
     data: "",
   });
+  const [searchDebounce, setSearchDebounce] = useState("");
+
+  // Debounce para pesquisa
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounce(filtros.busca);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [filtros.busca]);
+
+  const queryParams = useMemo(() => ({
+    ...filtros,
+    busca: searchDebounce
+  }), [filtros.status, filtros.loja, filtros.data, searchDebounce]);
 
   const { data: chamados, isLoading, error } = useQuery({
-    queryKey: ["chamados-historico", filtros],
+    queryKey: ["chamados-historico", queryParams],
     queryFn: async () => {
       let query = supabase
         .from("chamados_ti")
@@ -47,8 +62,8 @@ export const HistoricoCompleto = () => {
         .order("created_at", { ascending: false });
 
       // Aplicar filtros
-      if (filtros.busca.trim()) {
-        const buscaValue = filtros.busca.trim();
+      if (queryParams.busca.trim()) {
+        const buscaValue = queryParams.busca.trim();
         const isNumeric = /^\d+$/.test(buscaValue);
         
         if (isNumeric) {
@@ -58,17 +73,17 @@ export const HistoricoCompleto = () => {
         }
       }
 
-      if (filtros.status !== "todos") {
-        query = query.eq("status", filtros.status);
+      if (queryParams.status !== "todos") {
+        query = query.eq("status", queryParams.status);
       }
 
-      if (filtros.loja !== "todas") {
-        query = query.eq("loja", filtros.loja);
+      if (queryParams.loja !== "todas") {
+        query = query.eq("loja", queryParams.loja);
       }
 
-      if (filtros.data) {
-        query = query.gte("created_at", filtros.data + "T00:00:00")
-                     .lte("created_at", filtros.data + "T23:59:59");
+      if (queryParams.data) {
+        query = query.gte("created_at", queryParams.data + "T00:00:00")
+                     .lte("created_at", queryParams.data + "T23:59:59");
       }
 
       const { data, error } = await query;
@@ -378,92 +393,17 @@ export const HistoricoCompleto = () => {
                   </p>
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setChamadoSelecionado(chamado);
-                      }}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-
-                    {/* Alterar Status */}
-                    <Select value="" onValueChange={(value) => atualizarStatusChamado(chamado.id_chamado, value)}>
-                      <SelectTrigger className="w-8 h-8 p-0 border-0 bg-transparent hover:bg-muted">
-                        <Settings className="w-4 h-4" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.filter(opt => opt.value !== "todos" && opt.value !== chamado.status).map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Transferir Técnico */}
-                    {tecnicosTI && tecnicosTI.length > 0 && (
-                      <Select value="" onValueChange={(value) => {
-                        const [id, nome] = value.split("|");
-                        transferirTecnico(chamado.id_chamado, parseInt(id), nome);
-                      }}>
-                        <SelectTrigger className="w-8 h-8 p-0 border-0 bg-transparent hover:bg-muted">
-                          <UserCheck className="w-4 h-4" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tecnicosTI.map((tecnico) => (
-                            <SelectItem key={tecnico.id} value={`${tecnico.id}|${tecnico.nome}`}>
-                              {tecnico.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-
-                    {/* Finalizar Chamado */}
-                    {(chamado.status === "em_atendimento" || chamado.status === "aberto") && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
-                            <Check className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Finalizar Chamado #{chamado.id_chamado}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Descreva a solução aplicada para finalizar este chamado:
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <Textarea
-                            placeholder="Descreva como o problema foi resolvido..."
-                            value={solucaoAtual}
-                            onChange={(e) => setSolucaoAtual(e.target.value)}
-                            className="min-h-[100px]"
-                          />
-                          <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setSolucaoAtual("")}>
-                              Cancelar
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => {
-                                if (solucaoAtual.trim()) {
-                                  atualizarStatusChamado(chamado.id_chamado, "resolvido", solucaoAtual);
-                                  setSolucaoAtual("");
-                                }
-                              }}
-                              disabled={!solucaoAtual.trim()}
-                            >
-                              Finalizar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setChamadoSelecionado(chamado);
+                    }}
+                  >
+                    <Eye className="w-4 h-4" />
+                    Visualizar
+                  </Button>
                 </TableCell>
               </TableRow>
             )) || []}
