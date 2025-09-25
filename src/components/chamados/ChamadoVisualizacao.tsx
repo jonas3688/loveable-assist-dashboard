@@ -531,188 +531,214 @@ export const ChamadoVisualizacao = ({
               </CardContent>
             </Card>
 
-            {/* Solução Aplicada */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5" />
-                  Solução Aplicada
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Descreva como o problema foi resolvido..."
-                  value={solucaoAplicada}
-                  onChange={(e) => setSolucaoAplicada(e.target.value)}
-                  className="min-h-[100px]"
-                />
-              </CardContent>
-            </Card>
+            {/* Solução Aplicada - Apenas para chamados em atendimento ou se já houver solução */}
+            {(chamado.status === "em_atendimento" || chamado.solucao_aplicada) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    Solução Aplicada
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Descreva como o problema foi resolvido..."
+                    value={solucaoAplicada}
+                    onChange={(e) => setSolucaoAplicada(e.target.value)}
+                    className="min-h-[100px]"
+                    disabled={chamado.status === "resolvido" || chamado.status === "fechado"}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Ações do Chamado */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Ações do Chamado</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Alterar Status */}
-                  <div>
-                    <Label className="text-sm font-medium">Alterar Status do Chamado</Label>
-                    <Select
-                      value=""
-                      onValueChange={(value) => {
-                        if (value === "resolvido" || value === "fechado") {
-                          if (!solucaoAplicada.trim()) {
-                            toast({
-                              title: "Solução obrigatória",
-                              description: "É necessário descrever a solução antes de concluir o chamado.",
-                              variant: "destructive",
-                            });
-                            return;
+            {/* Ações do Chamado - Apenas para chamados em atendimento */}
+            {chamado.status === "em_atendimento" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Ações do Chamado</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Alterar Status */}
+                    <div>
+                      <Label className="text-sm font-medium">Alterar Status do Chamado</Label>
+                      <Select
+                        value=""
+                        onValueChange={(value) => {
+                          if (value === "resolvido" || value === "fechado") {
+                            if (!solucaoAplicada.trim()) {
+                              toast({
+                                title: "Solução obrigatória",
+                                description: "É necessário descrever a solução antes de concluir o chamado.",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
                           }
-                        }
-                        atualizarStatusMutation.mutate({ 
-                          novoStatus: value, 
-                          solucao: (value === "resolvido" || value === "fechado") ? solucaoAplicada : undefined 
-                        });
-                      }}
-                    >
-                      <SelectTrigger>
-                        <div className="flex items-center gap-2">
-                          <Settings className="w-4 h-4" />
-                          <SelectValue placeholder="Selecionar novo status" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions
-                          .filter(opt => opt.value !== chamado.status)
-                          .map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                          atualizarStatusMutation.mutate({ 
+                            novoStatus: value, 
+                            solucao: (value === "resolvido" || value === "fechado") ? solucaoAplicada : undefined 
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <div className="flex items-center gap-2">
+                            <Settings className="w-4 h-4" />
+                            <SelectValue placeholder="Selecionar novo status" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions
+                            .filter(opt => opt.value !== chamado.status && opt.value !== "aberto")
+                            .map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Transferir Técnico */}
+                    <div>
+                      <Label className="text-sm font-medium">Transferir Atendimento</Label>
+                      <div className="flex gap-2">
+                        <Select
+                          value={tecnicoSelecionado}
+                          onValueChange={setTecnicoSelecionado}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <UserCheck className="w-4 h-4" />
+                              <SelectValue placeholder="Selecionar técnico" />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {tecnicos?.map((tecnico) => (
+                              <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
+                                {tecnico.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            if (tecnicoSelecionado) {
+                              transferirTecnicoMutation.mutate(parseInt(tecnicoSelecionado));
+                            }
+                          }}
+                          disabled={!tecnicoSelecionado || transferirTecnicoMutation.isPending}
+                        >
+                          {transferirTecnicoMutation.isPending ? "Transferindo..." : "Confirmar"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Finalizar Atendimento */}
+                    <div className="pt-4 border-t">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            className="w-full bg-gradient-primary hover:shadow-hover transition-all"
+                            disabled={!solucaoAplicada.trim()}
+                          >
+                            <Check className="w-4 h-4 mr-2" />
+                            Finalizar Atendimento
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Finalizar Atendimento</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja finalizar este chamado? O status será alterado para "Resolvido".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                atualizarStatusMutation.mutate({ 
+                                  novoStatus: "resolvido", 
+                                  solucao: solucaoAplicada 
+                                });
+                                onClose();
+                              }}
+                            >
+                              Finalizar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Botões de Ação para Chamados Abertos */}
+            {chamado.status === "aberto" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Iniciar Atendimento</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-3">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          className="bg-gradient-primary hover:shadow-hover transition-all"
+                          disabled={!chamado.assigned_func_ti_id}
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          Iniciar Atendimento
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Iniciar atendimento agora?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Você assumirá o atendimento deste chamado e ele será marcado como "Em Atendimento".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => iniciarAtendimentoMutation.mutate()}
+                            disabled={iniciarAtendimentoMutation.isPending}
+                          >
+                            {iniciarAtendimentoMutation.isPending ? "Iniciando..." : "Sim, iniciar"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+
+                    <div className="flex gap-2">
+                      <Select value={tecnicoSelecionado} onValueChange={setTecnicoSelecionado}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Selecionar técnico" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tecnicos?.map((tecnico) => (
+                            <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
+                              {tecnico.nome}
                             </SelectItem>
                           ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Transferir Técnico */}
-                  <div>
-                    <Label className="text-sm font-medium">Transferir Atendimento</Label>
-                    <Select
-                      value={tecnicoSelecionado}
-                      onValueChange={(value) => {
-                        transferirTecnicoMutation.mutate(parseInt(value));
-                      }}
-                    >
-                      <SelectTrigger>
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="w-4 h-4" />
-                          <SelectValue placeholder="Selecionar técnico" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tecnicos?.map((tecnico) => (
-                          <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
-                            {tecnico.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Finalizar Atendimento */}
-                <div className="pt-4 border-t">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        className="w-full bg-gradient-primary hover:shadow-hover transition-all"
-                        disabled={!solucaoAplicada.trim()}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        onClick={() => atribuirTecnicoMutation.mutate(parseInt(tecnicoSelecionado))}
+                        disabled={!tecnicoSelecionado || atribuirTecnicoMutation.isPending}
                       >
-                        <Check className="w-4 h-4 mr-2" />
-                        Finalizar Atendimento
+                        <UserCog className="w-4 h-4 mr-2" />
+                        Atribuir
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Finalizar Atendimento</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja finalizar este chamado? O status será alterado para "Resolvido".
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => {
-                            atualizarStatusMutation.mutate({ 
-                              novoStatus: "resolvido", 
-                              solucao: solucaoAplicada 
-                            });
-                            onClose();
-                          }}
-                        >
-                          Finalizar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Botões de Ação */}
-            {chamado.status === "aberto" && (
-              <div className="flex gap-3">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button className="bg-gradient-primary hover:shadow-hover transition-all">
-                      <Play className="w-4 h-4 mr-2" />
-                      Iniciar Atendimento
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Iniciar atendimento agora?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Você assumirá o atendimento deste chamado e ele será marcado como "Em Atendimento".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => iniciarAtendimentoMutation.mutate()}
-                        disabled={iniciarAtendimentoMutation.isPending}
-                      >
-                        {iniciarAtendimentoMutation.isPending ? "Iniciando..." : "Sim, iniciar"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-
-                <div className="flex gap-2">
-                  <Select value={tecnicoSelecionado} onValueChange={setTecnicoSelecionado}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Selecionar técnico" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tecnicos?.map((tecnico) => (
-                        <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
-                          {tecnico.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    onClick={() => atribuirTecnicoMutation.mutate(parseInt(tecnicoSelecionado))}
-                    disabled={!tecnicoSelecionado || atribuirTecnicoMutation.isPending}
-                  >
-                    <UserCog className="w-4 h-4 mr-2" />
-                    Atribuir
-                  </Button>
-                </div>
-              </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
 
