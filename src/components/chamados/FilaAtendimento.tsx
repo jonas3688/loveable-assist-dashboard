@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Eye, Clock, MapPin, Building, Paperclip, Image as ImageIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DetalhesChamado } from "./DetalhesChamado";
+import { ChamadoVisualizacao } from "./ChamadoVisualizacao";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -93,41 +93,8 @@ export const FilaAtendimento = () => {
     refetchInterval: 30000, // Atualiza a cada 30 segundos
   });
 
-  const assumirChamadoMutation = useMutation({
-    mutationFn: async (chamado: ChamadoTI) => {
-      const { error } = await supabase
-        .from("chamados_ti")
-        .update({
-          status: "em_atendimento",
-          tecnico_responsavel: "Técnico Logado", // TODO: Implementar autenticação
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id_chamado", chamado.id_chamado);
-
-      if (error) throw error;
-      return chamado;
-    },
-    onSuccess: (chamado) => {
-      queryClient.invalidateQueries({ queryKey: ["chamados-fila"] });
-      queryClient.invalidateQueries({ queryKey: ["chamados-historico"] });
-      setChamadoSelecionado({ ...chamado, status: "em_atendimento", tecnico_responsavel: "Técnico Logado" });
-      toast({
-        title: "Chamado assumido",
-        description: `Chamado #${chamado.id_chamado} foi assumido com sucesso.`,
-      });
-    },
-    onError: (error) => {
-      console.error("Erro ao assumir chamado:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível assumir o chamado. Tente novamente.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAssumirChamado = (chamado: ChamadoTI) => {
-    assumirChamadoMutation.mutate(chamado);
+  const handleVisualizarChamado = (chamado: ChamadoTI) => {
+    setChamadoSelecionado(chamado);
   };
 
   if (isLoading) {
@@ -222,12 +189,11 @@ export const FilaAtendimento = () => {
                 <TableCell>
                   <Button
                     size="sm"
-                    onClick={() => handleAssumirChamado(chamado)}
-                    disabled={assumirChamadoMutation.isPending}
+                    onClick={() => handleVisualizarChamado(chamado)}
                     className="bg-gradient-primary hover:shadow-hover transition-all"
                   >
                     <Eye className="w-4 h-4 mr-2" />
-                    Ver / Assumir
+                    Visualizar
                   </Button>
                 </TableCell>
               </TableRow>
@@ -237,7 +203,7 @@ export const FilaAtendimento = () => {
       </div>
 
       {chamadoSelecionado && (
-        <DetalhesChamado
+        <ChamadoVisualizacao
           chamado={chamadoSelecionado}
           isOpen={!!chamadoSelecionado}
           onClose={() => setChamadoSelecionado(null)}

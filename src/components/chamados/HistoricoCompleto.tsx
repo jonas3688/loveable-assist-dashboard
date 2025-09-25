@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Eye, Search, Filter, Calendar, Building, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DetalhesChamado } from "./DetalhesChamado";
+import { ChamadoVisualizacao } from "./ChamadoVisualizacao";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ChamadoTI = Tables<"chamados_ti">;
@@ -26,6 +26,7 @@ const statusOptions = [
 
 export const HistoricoCompleto = () => {
   const [chamadoSelecionado, setChamadoSelecionado] = useState<ChamadoTI | null>(null);
+  const queryClient = useQueryClient();
   const [filtros, setFiltros] = useState({
     busca: "",
     status: "todos",
@@ -314,10 +315,13 @@ export const HistoricoCompleto = () => {
       </div>
 
       {chamadoSelecionado && (
-        <DetalhesChamado
+        <ChamadoVisualizacao
           chamado={chamadoSelecionado}
           isOpen={!!chamadoSelecionado}
           onClose={() => setChamadoSelecionado(null)}
+          onChamadoAtualizado={() => {
+            queryClient.invalidateQueries({ queryKey: ["chamados-historico"] });
+          }}
         />
       )}
     </>
