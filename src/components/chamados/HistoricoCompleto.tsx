@@ -7,10 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Eye, Search, Filter, Calendar, Building, User } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Eye, Search, Filter, Calendar, Building, User, Check, UserCheck, Settings } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChamadoVisualizacao } from "./ChamadoVisualizacao";
+import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ChamadoTI = Tables<"chamados_ti">;
@@ -26,13 +29,13 @@ const statusOptions = [
 
 export const HistoricoCompleto = () => {
   const [chamadoSelecionado, setChamadoSelecionado] = useState<ChamadoTI | null>(null);
+  const [solucaoAtual, setSolucaoAtual] = useState("");
   const queryClient = useQueryClient();
   const [filtros, setFiltros] = useState({
     busca: "",
     status: "todos",
     loja: "todas",
-    dataInicio: "",
-    dataFim: "",
+    data: "",
   });
 
   const { data: chamados, isLoading, error } = useQuery({
@@ -44,8 +47,15 @@ export const HistoricoCompleto = () => {
         .order("created_at", { ascending: false });
 
       // Aplicar filtros
-      if (filtros.busca) {
-        query = query.or(`id_chamado.eq.${filtros.busca},nome_funcionario.ilike.%${filtros.busca}%,descricao_problema.ilike.%${filtros.busca}%`);
+      if (filtros.busca.trim()) {
+        const buscaValue = filtros.busca.trim();
+        const isNumeric = /^\d+$/.test(buscaValue);
+        
+        if (isNumeric) {
+          query = query.eq("id_chamado", parseInt(buscaValue));
+        } else {
+          query = query.or(`nome_funcionario.ilike.%${buscaValue}%,descricao_problema.ilike.%${buscaValue}%,tecnico_responsavel.ilike.%${buscaValue}%`);
+        }
       }
 
       if (filtros.status !== "todos") {
@@ -56,12 +66,9 @@ export const HistoricoCompleto = () => {
         query = query.eq("loja", filtros.loja);
       }
 
-      if (filtros.dataInicio) {
-        query = query.gte("created_at", filtros.dataInicio);
-      }
-
-      if (filtros.dataFim) {
-        query = query.lte("created_at", filtros.dataFim + "T23:59:59");
+      if (filtros.data) {
+        query = query.gte("created_at", filtros.data + "T00:00:00")
+                     .lte("created_at", filtros.data + "T23:59:59");
       }
 
       const { data, error } = await query;
@@ -69,7 +76,6 @@ export const HistoricoCompleto = () => {
       if (error) throw error;
       return data as ChamadoTI[];
     },
-    refetchInterval: 60000, // Atualiza a cada 1 minuto
   });
 
   // Query para obter lojas únicas
@@ -87,6 +93,101 @@ export const HistoricoCompleto = () => {
       return lojasUnicas as string[];
     },
   });
+
+  // Realtime updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('chamados-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chamados_ti'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["chamados-historico"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // Query para obter técnicos de TI
+  const { data: tecnicosTI } = useQuery({
+    queryKey: ["tecnicos-ti"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("funcionarios_ti")
+        .select("*")
+        .order("nome");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const atualizarStatusChamado = async (chamadoId: number, novoStatus: string, solucao?: string) => {
+    try {
+      const updateData: any = { status: novoStatus };
+      if (solucao) updateData.solucao_aplicada = solucao;
+
+      const { error: updateError } = await supabase
+        .from("chamados_ti")
+        .update(updateData)
+        .eq("id_chamado", chamadoId);
+
+      if (updateError) throw updateError;
+
+      // Adicionar ao histórico
+      const { error: historyError } = await supabase
+        .from("chamados_ti_historico")
+        .insert({
+          chamado_id: chamadoId,
+          actor: "Sistema",
+          message: `Status alterado para: ${getStatusLabel(novoStatus)}${solucao ? ` - Solução: ${solucao}` : ""}`
+        });
+
+      if (historyError) throw historyError;
+
+      toast.success("Status atualizado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["chamados-historico"] });
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      toast.error("Erro ao atualizar status do chamado");
+    }
+  };
+
+  const transferirTecnico = async (chamadoId: number, tecnicoId: number, nomeTecnico: string) => {
+    try {
+      const { error: updateError } = await supabase
+        .from("chamados_ti")
+        .update({ assigned_func_ti_id: tecnicoId, tecnico_responsavel: nomeTecnico })
+        .eq("id_chamado", chamadoId);
+
+      if (updateError) throw updateError;
+
+      // Adicionar ao histórico
+      const { error: historyError } = await supabase
+        .from("chamados_ti_historico")
+        .insert({
+          chamado_id: chamadoId,
+          actor: "Sistema",
+          message: `Chamado transferido para: ${nomeTecnico}`
+        });
+
+      if (historyError) throw historyError;
+
+      toast.success("Técnico transferido com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["chamados-historico"] });
+    } catch (error) {
+      console.error("Erro ao transferir técnico:", error);
+      toast.error("Erro ao transferir técnico");
+    }
+  };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -201,20 +302,12 @@ export const HistoricoCompleto = () => {
             </Select>
 
             {/* Data */}
-            <div className="flex gap-2">
-              <Input
-                type="date"
-                value={filtros.dataInicio}
-                onChange={(e) => setFiltros(prev => ({ ...prev, dataInicio: e.target.value }))}
-                className="flex-1"
-              />
-              <Input
-                type="date"
-                value={filtros.dataFim}
-                onChange={(e) => setFiltros(prev => ({ ...prev, dataFim: e.target.value }))}
-                className="flex-1"
-              />
-            </div>
+            <Input
+              type="date"
+              value={filtros.data}
+              onChange={(e) => setFiltros(prev => ({ ...prev, data: e.target.value }))}
+              placeholder="Filtrar por data"
+            />
           </div>
         </CardContent>
       </Card>
@@ -231,7 +324,7 @@ export const HistoricoCompleto = () => {
               <TableHead className="w-40">Departamento</TableHead>
               <TableHead className="w-32">Status</TableHead>
               <TableHead>Descrição (Início)</TableHead>
-              <TableHead className="w-24">Ação</TableHead>
+              <TableHead className="w-48">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -285,16 +378,96 @@ export const HistoricoCompleto = () => {
                   </p>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setChamadoSelecionado(chamado);
-                    }}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setChamadoSelecionado(chamado);
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+
+                    {/* Alterar Status */}
+                    <Select onValueChange={(value) => atualizarStatusChamado(chamado.id_chamado, value)}>
+                      <SelectTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          <Settings className="w-4 h-4" />
+                        </Button>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.filter(opt => opt.value !== "todos" && opt.value !== chamado.status).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Transferir Técnico */}
+                    {tecnicosTI && tecnicosTI.length > 0 && (
+                      <Select onValueChange={(value) => {
+                        const [id, nome] = value.split("|");
+                        transferirTecnico(chamado.id_chamado, parseInt(id), nome);
+                      }}>
+                        <SelectTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <UserCheck className="w-4 h-4" />
+                          </Button>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tecnicosTI.map((tecnico) => (
+                            <SelectItem key={tecnico.id} value={`${tecnico.id}|${tecnico.nome}`}>
+                              {tecnico.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+
+                    {/* Finalizar Chamado */}
+                    {(chamado.status === "em_atendimento" || chamado.status === "aberto") && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="outline" onClick={(e) => e.stopPropagation()}>
+                            <Check className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Finalizar Chamado #{chamado.id_chamado}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Descreva a solução aplicada para finalizar este chamado:
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <Textarea
+                            placeholder="Descreva como o problema foi resolvido..."
+                            value={solucaoAtual}
+                            onChange={(e) => setSolucaoAtual(e.target.value)}
+                            className="min-h-[100px]"
+                          />
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setSolucaoAtual("")}>
+                              Cancelar
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                if (solucaoAtual.trim()) {
+                                  atualizarStatusChamado(chamado.id_chamado, "resolvido", solucaoAtual);
+                                  setSolucaoAtual("");
+                                }
+                              }}
+                              disabled={!solucaoAtual.trim()}
+                            >
+                              Finalizar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             )) || []}
