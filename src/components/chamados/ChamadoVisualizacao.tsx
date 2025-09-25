@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -127,13 +127,20 @@ const AnexosSection = ({ anexos }: { anexos: any }) => {
 };
 
 export const ChamadoVisualizacao = ({ 
-  chamado, 
+  chamado: chamadoOriginal, 
   isOpen, 
   onClose, 
   onChamadoAtualizado 
 }: ChamadoVisualizacaoProps) => {
+  const [chamado, setChamado] = useState(chamadoOriginal);
   const [tecnicoSelecionado, setTecnicoSelecionado] = useState<string>("");
   const [solucaoAplicada, setSolucaoAplicada] = useState(chamado.solucao_aplicada || "");
+  
+  // Atualizar o estado local quando o chamado original mudar
+  useEffect(() => {
+    setChamado(chamadoOriginal);
+    setSolucaoAplicada(chamadoOriginal.solucao_aplicada || "");
+  }, [chamadoOriginal]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -236,12 +243,22 @@ export const ChamadoVisualizacao = ({
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, tecnicoId) => {
+      // Atualizar o estado local do chamado
+      setChamado(prev => ({
+        ...prev,
+        assigned_func_ti_id: tecnicoId
+      }));
+      
+      // Invalidar todas as queries relacionadas ao chamado
       queryClient.invalidateQueries({ queryKey: ["chamados-fila"] });
       queryClient.invalidateQueries({ queryKey: ["chamados-historico"] });
-      queryClient.invalidateQueries({ queryKey: ["tecnico-responsavel", chamado.assigned_func_ti_id] });
+      queryClient.invalidateQueries({ queryKey: ["tecnico-responsavel"] });
       queryClient.invalidateQueries({ queryKey: ["chamado-historico", chamado.id_chamado] });
+      
+      // Forçar re-render do componente para atualizar o estado
       onChamadoAtualizado?.();
+      
       toast({
         title: "Técnico atribuído",
         description: `Chamado #${chamado.id_chamado} foi atribuído com sucesso.`,
