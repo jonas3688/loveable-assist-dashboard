@@ -691,62 +691,76 @@ export const ChamadoVisualizacao = ({
                   <CardTitle className="text-lg">Iniciar Atendimento</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Primeiro atribuir técnico */}
-                  <div className="flex gap-2">
-                    <Select value={tecnicoSelecionado} onValueChange={setTecnicoSelecionado}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Selecionar técnico" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tecnicos?.map((tecnico) => (
-                          <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
-                            {tecnico.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="outline"
-                      onClick={() => atribuirTecnicoMutation.mutate(parseInt(tecnicoSelecionado))}
-                      disabled={!tecnicoSelecionado || atribuirTecnicoMutation.isPending}
-                    >
-                      <UserCog className="w-4 h-4 mr-2" />
-                      Atribuir
-                    </Button>
-                  </div>
-
-                  {/* Só depois de atribuir técnico, liberar botão de iniciar */}
-                  {chamado.assigned_func_ti_id && (
-                    <div className="flex gap-3">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            className="bg-gradient-primary hover:shadow-hover transition-all"
-                          >
-                            <Play className="w-4 h-4 mr-2" />
-                            Iniciar Atendimento
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Iniciar atendimento agora?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Você assumirá o atendimento deste chamado e ele será marcado como "Em Atendimento".
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => iniciarAtendimentoMutation.mutate()}
-                              disabled={iniciarAtendimentoMutation.isPending}
-                            >
-                              {iniciarAtendimentoMutation.isPending ? "Iniciando..." : "Sim, iniciar"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                  {/* Seção de atribuição de técnico - só aparece se não há técnico atribuído */}
+                  {!chamado.assigned_func_ti_id && (
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground mb-2 block">
+                        Primeiro, selecione e atribua um técnico:
+                      </Label>
+                      <div className="flex gap-2">
+                        <Select value={tecnicoSelecionado} onValueChange={setTecnicoSelecionado}>
+                          <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Selecionar técnico" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {tecnicos?.map((tecnico) => (
+                              <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
+                                {tecnico.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          onClick={() => atribuirTecnicoMutation.mutate(parseInt(tecnicoSelecionado))}
+                          disabled={!tecnicoSelecionado || atribuirTecnicoMutation.isPending}
+                        >
+                          <UserCog className="w-4 h-4 mr-2" />
+                          Atribuir
+                        </Button>
+                      </div>
                     </div>
                   )}
+
+                  {/* Técnico já atribuído - mostrar informação */}
+                  {chamado.assigned_func_ti_id && tecnicoResponsavel && (
+                    <div className="bg-muted/50 p-3 rounded-lg">
+                      <Label className="text-sm font-medium text-muted-foreground">Técnico Atribuído:</Label>
+                      <p className="text-foreground font-medium">{tecnicoResponsavel.nome}</p>
+                    </div>
+                  )}
+
+                  {/* Botão de iniciar atendimento - sempre visível */}
+                  <div className="pt-4 border-t">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          className="w-full bg-gradient-primary hover:shadow-hover transition-all"
+                          disabled={!chamado.assigned_func_ti_id}
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          {!chamado.assigned_func_ti_id ? "Atribua um técnico primeiro" : "Iniciar Atendimento"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Iniciar atendimento agora?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Você assumirá o atendimento deste chamado e ele será marcado como "Em Atendimento".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => iniciarAtendimentoMutation.mutate()}
+                            disabled={iniciarAtendimentoMutation.isPending}
+                          >
+                            {iniciarAtendimentoMutation.isPending ? "Iniciando..." : "Sim, iniciar"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </CardContent>
               </Card>
             )}
