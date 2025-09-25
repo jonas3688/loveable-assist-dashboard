@@ -78,6 +78,12 @@ const AnexosSection = ({ anexos }: { anexos: any }) => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {anexosList.map((anexo: any, index: number) => {
           const anexoUrl = typeof anexo === 'string' ? anexo : anexo?.url || anexo;
+          
+          // Verificar se anexoUrl é uma string válida antes de usar toLowerCase
+          if (!anexoUrl || typeof anexoUrl !== 'string') {
+            return null; // Pular anexos inválidos
+          }
+          
           const isImage = imageExtensions.some(ext => anexoUrl.toLowerCase().includes(ext));
           
           const { data: { publicUrl } } = supabase.storage
