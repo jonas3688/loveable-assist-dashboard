@@ -26,7 +26,9 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Save
+  Save,
+  Paperclip,
+  Image as ImageIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -46,6 +48,66 @@ const statusOptions = [
   { value: "resolvido", label: "Resolvido", icon: CheckCircle },
   { value: "fechado", label: "Fechado", icon: XCircle },
 ];
+
+const AnexosSection = ({ anexos }: { anexos: any }) => {
+  if (!anexos || (Array.isArray(anexos) && anexos.length === 0)) {
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        <Paperclip className="w-8 h-8 mx-auto mb-2 opacity-50" />
+        <p className="text-sm">Nenhum anexo encontrado</p>
+      </div>
+    );
+  }
+
+  const anexosList = Array.isArray(anexos) ? anexos : [anexos];
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+  
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {anexosList.map((anexo: any, index: number) => {
+          const anexoUrl = typeof anexo === 'string' ? anexo : anexo?.url || anexo;
+          const isImage = imageExtensions.some(ext => anexoUrl.toLowerCase().includes(ext));
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('anexos-chamados-ti')
+            .getPublicUrl(anexoUrl);
+          
+          if (isImage) {
+            return (
+              <div key={index} className="relative group cursor-pointer">
+                <img
+                  src={publicUrl}
+                  alt={`Anexo ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+                  onClick={() => window.open(publicUrl, '_blank')}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
+                  <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            );
+          } else {
+            return (
+              <div
+                key={index}
+                className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                onClick={() => window.open(publicUrl, '_blank')}
+              >
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-sm font-medium truncate">
+                    Anexo {index + 1}
+                  </span>
+                </div>
+              </div>
+            );
+          }
+        })}
+      </div>
+    </div>
+  );
+};
 
 export const DetalhesChamado = ({ 
   chamado, 
@@ -298,6 +360,19 @@ export const DetalhesChamado = ({
               </CardContent>
             </Card>
           )}
+
+          {/* Anexos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Paperclip className="w-5 h-5" />
+                Anexos do Chamado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AnexosSection anexos={(chamado as any).anexos} />
+            </CardContent>
+          </Card>
 
           {/* Solução Aplicada (read-only se não estiver em atendimento) */}
           {!podeEditar && chamado.solucao_aplicada && (
