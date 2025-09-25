@@ -391,11 +391,9 @@ export const HistoricoCompleto = () => {
                     </Button>
 
                     {/* Alterar Status */}
-                    <Select onValueChange={(value) => atualizarStatusChamado(chamado.id_chamado, value)}>
-                      <SelectTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <Settings className="w-4 h-4" />
-                        </Button>
+                    <Select value="" onValueChange={(value) => atualizarStatusChamado(chamado.id_chamado, value)}>
+                      <SelectTrigger className="w-8 h-8 p-0 border-0 bg-transparent hover:bg-muted">
+                        <Settings className="w-4 h-4" />
                       </SelectTrigger>
                       <SelectContent>
                         {statusOptions.filter(opt => opt.value !== "todos" && opt.value !== chamado.status).map((option) => (
@@ -408,14 +406,12 @@ export const HistoricoCompleto = () => {
 
                     {/* Transferir Técnico */}
                     {tecnicosTI && tecnicosTI.length > 0 && (
-                      <Select onValueChange={(value) => {
+                      <Select value="" onValueChange={(value) => {
                         const [id, nome] = value.split("|");
                         transferirTecnico(chamado.id_chamado, parseInt(id), nome);
                       }}>
-                        <SelectTrigger asChild>
-                          <Button size="sm" variant="outline">
-                            <UserCheck className="w-4 h-4" />
-                          </Button>
+                        <SelectTrigger className="w-8 h-8 p-0 border-0 bg-transparent hover:bg-muted">
+                          <UserCheck className="w-4 h-4" />
                         </SelectTrigger>
                         <SelectContent>
                           {tecnicosTI.map((tecnico) => (
