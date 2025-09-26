@@ -171,34 +171,20 @@ const Dashboards = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                <ChartContainer
-                  config={{
-                    total: {
-                      label: "Chamados Resolvidos",
-                      color: "hsl(var(--primary))",
-                    },
-                  }}
-                  className="h-64"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={rankingTecnicos || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="nome" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                      />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar 
-                        dataKey="total" 
-                        fill="hsl(var(--primary))"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4 font-medium text-sm text-muted-foreground pb-2 border-b">
+                    <div>Posição</div>
+                    <div>Nome do Técnico</div>
+                    <div>Chamados Resolvidos</div>
+                  </div>
+                  {rankingTecnicos?.map((tecnico: any, index: number) => (
+                    <div key={tecnico.nome} className="grid grid-cols-3 gap-4 items-center py-2 border-b border-border/50">
+                      <div className="font-bold text-lg">#{index + 1}</div>
+                      <div className="font-medium">{tecnico.nome}</div>
+                      <div className="font-bold text-primary">{tecnico.total}</div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -263,37 +249,20 @@ const Dashboards = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                <ChartContainer
-                  config={{
-                    total: {
-                      label: "Total de Chamados",
-                      color: "hsl(var(--primary))",
-                    },
-                  }}
-                  className="h-64"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart 
-                      data={rankingLojas || []} 
-                      layout="horizontal"
-                      margin={{ left: 100 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis 
-                        type="category" 
-                        dataKey="nome"
-                        width={100}
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar 
-                        dataKey="total" 
-                        fill="hsl(var(--primary))"
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4 font-medium text-sm text-muted-foreground pb-2 border-b">
+                    <div>Posição</div>
+                    <div>Nome da Loja</div>
+                    <div>Total de Chamados</div>
+                  </div>
+                  {rankingLojas?.map((loja: any, index: number) => (
+                    <div key={loja.nome} className="grid grid-cols-3 gap-4 items-center py-2 border-b border-border/50">
+                      <div className="font-bold text-lg">#{index + 1}</div>
+                      <div className="font-medium">{loja.nome}</div>
+                      <div className="font-bold text-primary">{loja.total}</div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
