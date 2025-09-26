@@ -268,6 +268,44 @@ export type Database = {
           },
         ]
       }
+      chamados_ti_anexos: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          file_path: string
+          id_anexo: number
+          id_chamado: number
+          session_id: string
+          tipo: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          file_path: string
+          id_anexo?: number
+          id_chamado: number
+          session_id: string
+          tipo?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          file_path?: string
+          id_anexo?: number
+          id_chamado?: number
+          session_id?: string
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamados_ti_anexos_id_chamado_fkey"
+            columns: ["id_chamado"]
+            isOneToOne: false
+            referencedRelation: "chamados_ti"
+            referencedColumns: ["id_chamado"]
+          },
+        ]
+      }
       chamados_ti_historico: {
         Row: {
           actor: string
