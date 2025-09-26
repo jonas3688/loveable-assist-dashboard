@@ -6,11 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Users, Building, BarChart3 } from "lucide-react";
+import { TrendingUp, Users, Building, BarChart3, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Dashboards = () => {
   const [periodoFiltro, setPeriodoFiltro] = useState<string>("30");
+  const navigate = useNavigate();
 
   // Query para ranking de técnicos
   const { data: rankingTecnicos, isLoading: loadingTecnicos } = useQuery({
@@ -21,19 +24,17 @@ const Dashboards = () => {
       
       const { data, error } = await supabase
         .from("chamados_ti")
-        .select(`
-          assigned_func_ti_id,
-          funcionarios_ti!inner(nome)
-        `)
-        .in("status", ["resolvido", "fechado"])
+        .select("tecnico_responsavel")
+        .eq("status", "resolvido")
         .gte("created_at", dataLimite.toISOString())
-        .not("assigned_func_ti_id", "is", null);
+        .not("tecnico_responsavel", "is", null)
+        .neq("tecnico_responsavel", "");
 
       if (error) throw error;
 
       // Agrupar por técnico
       const grupos = data.reduce((acc: any, chamado: any) => {
-        const tecnicoNome = chamado.funcionarios_ti?.nome || "Não atribuído";
+        const tecnicoNome = chamado.tecnico_responsavel || "Não atribuído";
         acc[tecnicoNome] = (acc[tecnicoNome] || 0) + 1;
         return acc;
       }, {});
@@ -48,38 +49,19 @@ const Dashboards = () => {
   const { data: rankingFuncionarios, isLoading: loadingFuncionarios } = useQuery({
     queryKey: ["ranking-funcionarios", periodoFiltro],
     queryFn: async () => {
-      const dataLimite = new Date();
-      dataLimite.setDate(dataLimite.getDate() - parseInt(periodoFiltro));
-      
       const { data, error } = await supabase
-        .from("chamados_ti")
-        .select(`
-          funcionario_id,
-          funcionarios!inner(nome, departamento)
-        `)
-        .gte("created_at", dataLimite.toISOString())
-        .not("funcionario_id", "is", null);
+        .from("funcionarios")
+        .select("nome, departamento, quantidade_chamados")
+        .gt("quantidade_chamados", 0);
 
       if (error) throw error;
 
-      // Agrupar por funcionário
-      const grupos = data.reduce((acc: any, chamado: any) => {
-        const funcionario = chamado.funcionarios;
-        if (funcionario) {
-          const key = funcionario.nome;
-          if (!acc[key]) {
-            acc[key] = {
-              nome: funcionario.nome,
-              departamento: funcionario.departamento || "Não informado",
-              total: 0
-            };
-          }
-          acc[key].total += 1;
-        }
-        return acc;
-      }, {});
-
-      return Object.values(grupos)
+      return data
+        .map((funcionario: any) => ({
+          nome: funcionario.nome,
+          departamento: funcionario.departamento || "Não informado",
+          total: funcionario.quantidade_chamados
+        }))
         .sort((a: any, b: any) => b.total - a.total);
     },
   });
@@ -93,18 +75,16 @@ const Dashboards = () => {
       
       const { data, error } = await supabase
         .from("chamados_ti")
-        .select(`
-          loja_id,
-          lojas!inner(nome)
-        `)
+        .select("loja")
         .gte("created_at", dataLimite.toISOString())
-        .not("loja_id", "is", null);
+        .not("loja", "is", null)
+        .neq("loja", "");
 
       if (error) throw error;
 
       // Agrupar por loja
       const grupos = data.reduce((acc: any, chamado: any) => {
-        const lojaNome = chamado.lojas?.nome || "Não informado";
+        const lojaNome = chamado.loja || "Não informado";
         acc[lojaNome] = (acc[lojaNome] || 0) + 1;
         return acc;
       }, {});
@@ -125,11 +105,21 @@ const Dashboards = () => {
   return (
     <div className="container mx-auto p-6 space-y-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboards TI</h1>
-          <p className="text-muted-foreground">
-            Análise de performance e estatísticas dos chamados de TI
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/chamados-ti")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para Chamados TI
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboards TI</h1>
+            <p className="text-muted-foreground">
+              Análise de performance e estatísticas dos chamados de TI
+            </p>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">
