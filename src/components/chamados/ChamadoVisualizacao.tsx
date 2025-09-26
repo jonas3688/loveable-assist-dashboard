@@ -134,12 +134,16 @@ export const ChamadoVisualizacao = ({
 }: ChamadoVisualizacaoProps) => {
   const [chamado, setChamado] = useState(chamadoOriginal);
   const [tecnicoSelecionado, setTecnicoSelecionado] = useState<string>("");
+  const [statusSelecionado, setStatusSelecionado] = useState<string>("");
+  const [statusConfirmado, setStatusConfirmado] = useState<boolean>(false);
   const [solucaoAplicada, setSolucaoAplicada] = useState(chamado.solucao_aplicada || "");
   
   // Atualizar o estado local quando o chamado original mudar
   useEffect(() => {
     setChamado(chamadoOriginal);
     setSolucaoAplicada(chamadoOriginal.solucao_aplicada || "");
+    setStatusSelecionado("");
+    setStatusConfirmado(false);
   }, [chamadoOriginal]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -584,44 +588,62 @@ export const ChamadoVisualizacao = ({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
-                    {/* Alterar Status */}
+                    {/* Atualizar Status */}
                     <div>
-                      <Label className="text-sm font-medium">Alterar Status do Chamado</Label>
-                      <Select
-                        value=""
-                        onValueChange={(value) => {
-                          if (value === "resolvido" || value === "fechado") {
-                            if (!solucaoAplicada.trim()) {
+                      <Label className="text-sm font-medium">Atualizar Status</Label>
+                      <div className="flex gap-2">
+                        <Select
+                          value={statusSelecionado}
+                          onValueChange={(value) => {
+                            setStatusSelecionado(value);
+                            setStatusConfirmado(false);
+                          }}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Settings className="w-4 h-4" />
+                              <SelectValue placeholder={
+                                statusConfirmado && statusSelecionado ? 
+                                getStatusLabel(statusSelecionado) : 
+                                "Selecionar novo status"
+                              } />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statusOptions
+                              .filter(opt => opt.value !== chamado.status && opt.value !== "aberto")
+                              .map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            if (!statusSelecionado) return;
+                            
+                            if ((statusSelecionado === "resolvido" || statusSelecionado === "fechado") && !solucaoAplicada.trim()) {
                               toast({
                                 title: "Solução obrigatória",
-                                description: "É necessário descrever a solução antes de concluir o chamado.",
+                                description: "Para marcar como resolvido ou fechado, você deve informar a solução aplicada.",
                                 variant: "destructive",
                               });
                               return;
                             }
-                          }
-                          atualizarStatusMutation.mutate({ 
-                            novoStatus: value, 
-                            solucao: (value === "resolvido" || value === "fechado") ? solucaoAplicada : undefined 
-                          });
-                        }}
-                      >
-                        <SelectTrigger>
-                          <div className="flex items-center gap-2">
-                            <Settings className="w-4 h-4" />
-                            <SelectValue placeholder="Selecionar novo status" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions
-                            .filter(opt => opt.value !== chamado.status && opt.value !== "aberto")
-                            .map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
+                            
+                            setStatusConfirmado(true);
+                            toast({
+                              title: "Status confirmado",
+                              description: `Status ${getStatusLabel(statusSelecionado)} foi confirmado. Agora você pode encerrar o chamado.`,
+                            });
+                          }}
+                          disabled={!statusSelecionado || statusConfirmado}
+                        >
+                          {statusConfirmado ? "Confirmado" : "Confirmar"}
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Transferir Técnico */}
@@ -660,23 +682,26 @@ export const ChamadoVisualizacao = ({
                       </div>
                     </div>
 
-                    {/* Finalizar Atendimento */}
+                    {/* Encerrar Chamado */}
                     <div className="pt-4 border-t">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button 
                             className="w-full bg-gradient-primary hover:shadow-hover transition-all"
-                            disabled={!solucaoAplicada.trim()}
+                            disabled={!statusConfirmado || !solucaoAplicada.trim() || (statusSelecionado !== "resolvido" && statusSelecionado !== "fechado")}
                           >
                             <Check className="w-4 h-4 mr-2" />
-                            Finalizar Atendimento
+                            {!statusConfirmado ? "Confirme um status primeiro" : 
+                             (statusSelecionado !== "resolvido" && statusSelecionado !== "fechado") ? "Status deve ser Resolvido ou Fechado" :
+                             `Encerrar como ${getStatusLabel(statusSelecionado)}`}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Finalizar Atendimento</AlertDialogTitle>
+                            <AlertDialogTitle>Encerrar Chamado</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Tem certeza que deseja finalizar este chamado? O status será alterado para "Resolvido".
+                              Tem certeza que deseja encerrar este chamado como "{getStatusLabel(statusSelecionado)}"?
+                              {statusSelecionado === "fechado" && " Esta ação indica que o problema não foi resolvido."}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -684,13 +709,13 @@ export const ChamadoVisualizacao = ({
                             <AlertDialogAction
                               onClick={() => {
                                 atualizarStatusMutation.mutate({ 
-                                  novoStatus: "resolvido", 
+                                  novoStatus: statusSelecionado, 
                                   solucao: solucaoAplicada 
                                 });
                                 onClose();
                               }}
                             >
-                              Finalizar
+                              Encerrar
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>

@@ -3,32 +3,46 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FilaAtendimento } from "@/components/chamados/FilaAtendimento";
 import { HistoricoCompleto } from "@/components/chamados/HistoricoCompleto";
-import { Headphones, History, AlertCircle } from "lucide-react";
+import { Headphones, History, AlertCircle, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const ChamadosTI = () => {
+  const navigate = useNavigate();
+  
   return (
     <main className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-gradient-primary rounded-lg">
-              <Headphones className="w-6 h-6 text-primary-foreground" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-primary rounded-lg">
+                <Headphones className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">
+                  Painel de Controle - Chamados TI
+                </h1>
+                <p className="text-muted-foreground">
+                  Gerencie chamados de suporte técnico da V12
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Painel de Controle - Chamados TI
-              </h1>
-              <p className="text-muted-foreground">
-                Gerencie chamados de suporte técnico da V12
-              </p>
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/dashboards")}
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Ver Dashboards
+            </Button>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="fila" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md bg-card border shadow-card">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg bg-card border shadow-card">
             <TabsTrigger 
               value="fila" 
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -42,6 +56,14 @@ const ChamadosTI = () => {
             >
               <History className="w-4 h-4" />
               Histórico Completo
+            </TabsTrigger>
+            <TabsTrigger 
+              value="dashboards"
+              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              onClick={() => navigate("/dashboards")}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Dashboards
             </TabsTrigger>
           </TabsList>
 
