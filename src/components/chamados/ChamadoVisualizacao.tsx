@@ -182,6 +182,9 @@ export const ChamadoVisualizacao = ({
 
   const iniciarAtendimentoMutation = useMutation({
     mutationFn: async () => {
+      // Buscar o nome do técnico
+      const tecnicoLogado = tecnicos?.find(t => t.id === 1) || tecnicos?.[0]; // TODO: Usar ID do técnico logado
+      
       // Registrar no histórico
       await supabase
         .from("chamados_ti_historico")
@@ -197,6 +200,7 @@ export const ChamadoVisualizacao = ({
         .update({
           status: "em_atendimento",
           assigned_func_ti_id: 1, // TODO: Usar ID do técnico logado
+          tecnico_responsavel: tecnicoLogado?.nome,
           updated_at: new Date().toISOString(),
         })
         .eq("id_chamado", chamado.id_chamado);
@@ -241,6 +245,7 @@ export const ChamadoVisualizacao = ({
         .from("chamados_ti")
         .update({
           assigned_func_ti_id: tecnicoId,
+          tecnico_responsavel: tecnico?.nome,
           updated_at: new Date().toISOString(),
         })
         .eq("id_chamado", chamado.id_chamado);
@@ -286,6 +291,14 @@ export const ChamadoVisualizacao = ({
         updated_at: new Date().toISOString()
       };
       if (solucao) updateData.solucao_aplicada = solucao;
+
+      // Se está resolvendo o chamado e não tem técnico responsável, usar o técnico atribuído
+      if (novoStatus === "resolvido" && !chamado.tecnico_responsavel && chamado.assigned_func_ti_id) {
+        const tecnico = tecnicos?.find(t => t.id === chamado.assigned_func_ti_id);
+        if (tecnico) {
+          updateData.tecnico_responsavel = tecnico.nome;
+        }
+      }
 
       // Atualizar chamado
       const { error } = await supabase

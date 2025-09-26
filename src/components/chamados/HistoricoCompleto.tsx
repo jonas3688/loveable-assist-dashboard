@@ -150,6 +150,24 @@ export const HistoricoCompleto = () => {
       const updateData: any = { status: novoStatus };
       if (solucao) updateData.solucao_aplicada = solucao;
 
+      // Se está resolvendo o chamado, buscar o técnico responsável
+      if (novoStatus === "resolvido") {
+        // Buscar o chamado atual para ver se tem técnico atribuído
+        const { data: chamadoAtual } = await supabase
+          .from("chamados_ti")
+          .select("assigned_func_ti_id, tecnico_responsavel")
+          .eq("id_chamado", chamadoId)
+          .single();
+
+        // Se não tem técnico responsável mas tem técnico atribuído, preencher
+        if (chamadoAtual && !chamadoAtual.tecnico_responsavel && chamadoAtual.assigned_func_ti_id) {
+          const tecnico = tecnicosTI?.find(t => t.id === chamadoAtual.assigned_func_ti_id);
+          if (tecnico) {
+            updateData.tecnico_responsavel = tecnico.nome;
+          }
+        }
+      }
+
       const { error: updateError } = await supabase
         .from("chamados_ti")
         .update(updateData)
