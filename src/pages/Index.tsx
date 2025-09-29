@@ -15,7 +15,7 @@ const Index = () => {
       <header className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">V12 TI Dashboard</h1>
+            <h1 className="text-2xl font-bold text-foreground">Suporte V12</h1>
             <p className="text-muted-foreground">Bem-vindo, {funcionario?.nome}!</p>
           </div>
           <DropdownMenu>
@@ -49,7 +49,7 @@ const Index = () => {
           </h2>
           
           <p className="text-xl text-muted-foreground mb-8">
-            Gerencie o sistema de TI da V12 Veículos
+            Gerencie o sistema de TI da V12 Motors
           </p>
         </div>
 
@@ -76,25 +76,27 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <UserPlus className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <CardTitle>Cadastro de Funcionários</CardTitle>
-                <CardDescription>
-                  Gerencie funcionários de TI e permissões
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="w-full">
-                  <Link to="/cadastro-funcionarios">
-                    Gerenciar Funcionários
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            {isAdmin && (
+              <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
+                <CardHeader className="text-center">
+                  <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <UserPlus className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <CardTitle>Cadastro de Funcionários</CardTitle>
+                  <CardDescription>
+                    Gerencie funcionários de TI e permissões
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full">
+                    <Link to="/cadastro-funcionarios">
+                      Gerenciar Funcionários
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </section>

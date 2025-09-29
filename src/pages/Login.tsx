@@ -152,10 +152,6 @@ export default function Login() {
               )}
             </Button>
           </form>
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Credenciais de teste:</p>
-            <p>Email: ana.paula@empresa.com | Senha: 123</p>
-          </div>
         </CardContent>
       </Card>
     </div>
