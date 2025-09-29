@@ -134,12 +134,21 @@ export default function CadastroFuncionarios() {
 
   const deletarFuncionario = async (funcionario: FuncionarioTI) => {
     try {
-      const { error } = await supabase
+      // Primeiro, remover as referências de chamados atribuídos a este funcionário
+      const { error: updateError } = await supabase
+        .from('chamados_ti')
+        .update({ assigned_func_ti_id: null })
+        .eq('assigned_func_ti_id', funcionario.id);
+
+      if (updateError) throw updateError;
+
+      // Agora excluir o funcionário
+      const { error: deleteError } = await supabase
         .from('funcionarios_ti')
         .delete()
         .eq('id', funcionario.id);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
       toast({
         title: "Sucesso!",
