@@ -53,6 +53,183 @@ export type Database = {
         }
         Relationships: []
       }
+      bi_acompanhamento_entrevistas: {
+        Row: {
+          chassi: string | null
+          comentarios: string | null
+          concessionaria: string | null
+          cpf: string | null
+          data_entrevista: string | null
+          data_evento: string | null
+          data_processamento: string | null
+          id: number
+          modelo_veiculo: string | null
+          nome_cliente: string | null
+          q1_tratamento_cliente: string | null
+          q2_organizacao: string | null
+          q3_informacoes_prestadas: string | null
+          q6a_satisfacao_numerica: number | null
+          questionario_id: string | null
+          reavaliou: string | null
+          red_flag: string | null
+          satisfacao_geral_original: string | null
+          satisfacao_geral_reavaliacao: string | null
+          topicos: string | null
+          vendedor: string | null
+        }
+        Insert: {
+          chassi?: string | null
+          comentarios?: string | null
+          concessionaria?: string | null
+          cpf?: string | null
+          data_entrevista?: string | null
+          data_evento?: string | null
+          data_processamento?: string | null
+          id?: number
+          modelo_veiculo?: string | null
+          nome_cliente?: string | null
+          q1_tratamento_cliente?: string | null
+          q2_organizacao?: string | null
+          q3_informacoes_prestadas?: string | null
+          q6a_satisfacao_numerica?: number | null
+          questionario_id?: string | null
+          reavaliou?: string | null
+          red_flag?: string | null
+          satisfacao_geral_original?: string | null
+          satisfacao_geral_reavaliacao?: string | null
+          topicos?: string | null
+          vendedor?: string | null
+        }
+        Update: {
+          chassi?: string | null
+          comentarios?: string | null
+          concessionaria?: string | null
+          cpf?: string | null
+          data_entrevista?: string | null
+          data_evento?: string | null
+          data_processamento?: string | null
+          id?: number
+          modelo_veiculo?: string | null
+          nome_cliente?: string | null
+          q1_tratamento_cliente?: string | null
+          q2_organizacao?: string | null
+          q3_informacoes_prestadas?: string | null
+          q6a_satisfacao_numerica?: number | null
+          questionario_id?: string | null
+          reavaliou?: string | null
+          red_flag?: string | null
+          satisfacao_geral_original?: string | null
+          satisfacao_geral_reavaliacao?: string | null
+          topicos?: string | null
+          vendedor?: string | null
+        }
+        Relationships: []
+      }
+      bi_cem_resumo: {
+        Row: {
+          data_processamento: string | null
+          data_relatorio: string | null
+          id: number
+          pesquisas_nao_respondidas: number | null
+          pesquisas_respondidas: number | null
+          taxa_de_resposta: number | null
+          total_pesquisas: number | null
+          vendedor: string | null
+        }
+        Insert: {
+          data_processamento?: string | null
+          data_relatorio?: string | null
+          id?: number
+          pesquisas_nao_respondidas?: number | null
+          pesquisas_respondidas?: number | null
+          taxa_de_resposta?: number | null
+          total_pesquisas?: number | null
+          vendedor?: string | null
+        }
+        Update: {
+          data_processamento?: string | null
+          data_relatorio?: string | null
+          id?: number
+          pesquisas_nao_respondidas?: number | null
+          pesquisas_respondidas?: number | null
+          taxa_de_resposta?: number | null
+          total_pesquisas?: number | null
+          vendedor?: string | null
+        }
+        Relationships: []
+      }
+      bi_qualidade_cadastros: {
+        Row: {
+          celular: string | null
+          chassi: string | null
+          cliente: string | null
+          concessionaria: string | null
+          data_evento: string | null
+          data_processamento: string | null
+          email: string | null
+          id: number
+          veiculo: string | null
+          vendedor: string | null
+        }
+        Insert: {
+          celular?: string | null
+          chassi?: string | null
+          cliente?: string | null
+          concessionaria?: string | null
+          data_evento?: string | null
+          data_processamento?: string | null
+          email?: string | null
+          id?: number
+          veiculo?: string | null
+          vendedor?: string | null
+        }
+        Update: {
+          celular?: string | null
+          chassi?: string | null
+          cliente?: string | null
+          concessionaria?: string | null
+          data_evento?: string | null
+          data_processamento?: string | null
+          email?: string | null
+          id?: number
+          veiculo?: string | null
+          vendedor?: string | null
+        }
+        Relationships: []
+      }
+      bi_veiculos_vendidos: {
+        Row: {
+          concessionaria: string | null
+          data_processamento: string | null
+          data_venda: string | null
+          id: number
+          nome_cliente: string | null
+          valor_venda: number | null
+          veiculo: string | null
+          vendedor: string | null
+        }
+        Insert: {
+          concessionaria?: string | null
+          data_processamento?: string | null
+          data_venda?: string | null
+          id?: number
+          nome_cliente?: string | null
+          valor_venda?: number | null
+          veiculo?: string | null
+          vendedor?: string | null
+        }
+        Update: {
+          concessionaria?: string | null
+          data_processamento?: string | null
+          data_venda?: string | null
+          id?: number
+          nome_cliente?: string | null
+          valor_venda?: number | null
+          veiculo?: string | null
+          vendedor?: string | null
+        }
+        Relationships: []
+      }
       campanhas_engajamento: {
         Row: {
           conteudo_mensagem: string
@@ -611,16 +788,25 @@ export type Database = {
       }
       funcionarios_ti: {
         Row: {
+          email: string
           id: number
           nome: string
+          permissao: Database["public"]["Enums"]["permissao_funcionario"]
+          senha_hash: string
         }
         Insert: {
+          email: string
           id?: number
           nome: string
+          permissao?: Database["public"]["Enums"]["permissao_funcionario"]
+          senha_hash: string
         }
         Update: {
+          email?: string
           id?: number
           nome?: string
+          permissao?: Database["public"]["Enums"]["permissao_funcionario"]
+          senha_hash?: string
         }
         Relationships: []
       }
@@ -817,6 +1003,10 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: number
       }
+      hash_password: {
+        Args: { password: string }
+        Returns: string
+      }
       hnsw_bit_support: {
         Args: { "": unknown }
         Returns: unknown
@@ -922,8 +1112,13 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: number
       }
+      verify_password: {
+        Args: { hash: string; password: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      permissao_funcionario: "admin" | "padrao"
       status_carro:
         | "Disponível"
         | "Vendido"
@@ -1074,6 +1269,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      permissao_funcionario: ["admin", "padrao"],
       status_carro: [
         "Disponível",
         "Vendido",
