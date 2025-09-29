@@ -38,18 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, senha: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Verificar credenciais usando a função do banco
-      const { data, error } = await supabase.rpc('verify_password', {
-        password: senha,
-        hash: `(SELECT senha_hash FROM funcionarios_ti WHERE email = '${email}')`
-      });
-
-      if (error) {
-        console.error('Erro na verificação:', error);
-        return { success: false, error: 'Erro ao verificar credenciais' };
-      }
-
-      // Se a senha estiver correta, buscar dados do funcionário
+      // Primeiro, buscar dados do funcionário
       const { data: funcionarioData, error: funcionarioError } = await supabase
         .from('funcionarios_ti')
         .select('id, nome, email, permissao')
@@ -60,26 +49,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: 'Funcionário não encontrado' };
       }
 
-      // Verificar senha diretamente no cliente (temporário para desenvolvimento)
-      const { data: senhaCheck } = await supabase
-        .from('funcionarios_ti')
-        .select('senha_hash')
-        .eq('email', email)
-        .single();
+      // Verificar senha usando a função do banco
+      const { data: senhaCorreta, error: verifyError } = await supabase.rpc('verify_password', {
+        password: senha,
+        hash: `(SELECT senha_hash FROM funcionarios_ti WHERE email = '${email}')`
+      });
 
-      // Como não temos acesso direto à função verify_password, vamos usar uma abordagem temporária
-      // Em produção, isso deveria ser feito com uma edge function
-      if (!senhaCheck?.senha_hash) {
-        return { success: false, error: 'Credenciais inválidas' };
+      if (verifyError) {
+        console.error('Erro na verificação:', verifyError);
+        return { success: false, error: 'Erro ao verificar credenciais' };
       }
 
-      // Para desenvolvimento, vamos aceitar a senha "123" para todos
-      if (senha !== '123') {
+      if (!senhaCorreta) {
         return { success: false, error: 'Senha incorreta' };
       }
 
       // Verificar se a senha é a padrão (123) para forçar mudança
-      if (senha === '123') {
+      // Fazemos isso tentando verificar se a senha atual é "123"
+      const { data: isPadraoSenha } = await supabase.rpc('verify_password', {
+        password: '123',
+        hash: `(SELECT senha_hash FROM funcionarios_ti WHERE email = '${email}')`
+      });
+
+      if (isPadraoSenha) {
         setNeedsPasswordChange(true);
       }
 
