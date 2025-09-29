@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Users, Building, BarChart3, ArrowLeft } from "lucide-react";
+import { TrendingUp, Users, Building, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const Dashboards = () => {
   const [periodoFiltro, setPeriodoFiltro] = useState<string>("30");
@@ -103,40 +104,31 @@ const Dashboards = () => {
   ];
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/chamados-ti")}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar para Chamados TI
-          </Button>
+    <div className="min-h-screen bg-gradient-subtle">
+      <PageHeader title="Dashboards TI" backTo="/chamados-ti" />
+      <div className="container mx-auto p-6 space-y-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboards TI</h1>
             <p className="text-muted-foreground">
               Análise de performance e estatísticas dos chamados de TI
             </p>
           </div>
+          
+          <div className="flex items-center gap-4">
+            <Select value={periodoFiltro} onValueChange={setPeriodoFiltro}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Selecionar período" />
+              </SelectTrigger>
+              <SelectContent>
+                {periodos.map((periodo) => (
+                  <SelectItem key={periodo.value} value={periodo.value}>
+                    {periodo.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <Select value={periodoFiltro} onValueChange={setPeriodoFiltro}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Selecionar período" />
-            </SelectTrigger>
-            <SelectContent>
-              {periodos.map((periodo) => (
-                <SelectItem key={periodo.value} value={periodo.value}>
-                  {periodo.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
       <Tabs defaultValue="tecnicos" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -268,6 +260,7 @@ const Dashboards = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 };

@@ -37,7 +37,7 @@ export default function Login() {
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao sistema"
       });
-      navigate('/chamados-ti');
+      navigate('/dashboard');
     } else {
       toast({
         title: "Erro no login",

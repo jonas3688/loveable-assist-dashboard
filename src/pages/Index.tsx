@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Headphones, ArrowRight, Zap, Shield, Users, UserPlus, LogOut, BarChart3 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Headphones, ArrowRight, UserPlus, BarChart3, ArrowLeft, User, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const Index = () => {
   const { funcionario, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <main className="min-h-screen bg-gradient-subtle">
@@ -16,10 +18,20 @@ const Index = () => {
             <h1 className="text-2xl font-bold text-foreground">V12 TI Dashboard</h1>
             <p className="text-muted-foreground">Bem-vindo, {funcionario?.nome}!</p>
           </div>
-          <Button onClick={logout} variant="outline" size="sm">
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <User className="mr-2 h-4 w-4" />
+                {funcionario?.nome}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -105,47 +117,6 @@ const Index = () => {
               </CardContent>
             </Card>
           )}
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
-            <CardHeader className="text-center">
-              <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <CardTitle>Atendimento Ágil</CardTitle>
-              <CardDescription>
-                Fila organizada por ordem de chegada para atendimento prioritário
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
-            <CardHeader className="text-center">
-              <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <CardTitle>Controle Completo</CardTitle>
-              <CardDescription>
-                Histórico detalhado com filtros avançados e busca inteligente
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
-            <CardHeader className="text-center">
-              <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Users className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <CardTitle>Gestão de Equipe</CardTitle>
-              <CardDescription>
-                Acompanhe o desempenho e distribua chamados entre técnicos
-              </CardDescription>
-            </CardHeader>
-          </Card>
         </div>
       </section>
     </main>

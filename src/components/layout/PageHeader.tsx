@@ -1,0 +1,52 @@
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ArrowLeft, User, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface PageHeaderProps {
+  title: string;
+  showBackButton?: boolean;
+  backTo?: string;
+}
+
+export function PageHeader({ title, showBackButton = true, backTo = "/dashboard" }: PageHeaderProps) {
+  const { funcionario, logout } = useAuth();
+  const navigate = useNavigate();
+
+  return (
+    <header className="container mx-auto px-4 py-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          {showBackButton && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate(backTo)}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <User className="mr-2 h-4 w-4" />
+              {funcionario?.nome}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
+  );
+}

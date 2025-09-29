@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Users } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 interface FuncionarioTI {
   id: number;
@@ -131,17 +132,15 @@ export default function CadastroFuncionarios() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
-            Cadastro de Funcionários
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Gerencie funcionários de TI e suas permissões
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-subtle">
+      <PageHeader title="Cadastro de Funcionários" />
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <p className="text-muted-foreground mt-2">
+              Gerencie funcionários de TI e suas permissões
+            </p>
+          </div>
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -260,6 +259,7 @@ export default function CadastroFuncionarios() {
           </Table>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

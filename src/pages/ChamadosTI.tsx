@@ -3,31 +3,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FilaAtendimento } from "@/components/chamados/FilaAtendimento";
 import { HistoricoCompleto } from "@/components/chamados/HistoricoCompleto";
-import { Headphones, History, AlertCircle, BarChart3 } from "lucide-react";
+import { History, AlertCircle, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const ChamadosTI = () => {
   const navigate = useNavigate();
   
   return (
     <main className="min-h-screen bg-gradient-subtle">
+      <PageHeader title="Chamados TI" />
       <div className="container mx-auto py-8 px-4">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-primary rounded-lg">
-                <Headphones className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  Painel de Controle - Chamados TI
-                </h1>
-                <p className="text-muted-foreground">
-                  Gerencie chamados de suporte técnico da V12
-                </p>
-              </div>
+            <div>
+              <p className="text-muted-foreground">
+                Gerencie chamados de suporte técnico da V12
+              </p>
             </div>
             <Button
               variant="outline"

@@ -20,11 +20,11 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
   }
 
   if (!funcionario) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (adminOnly && !isAdmin) {
-    return <Navigate to="/chamados-ti" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
