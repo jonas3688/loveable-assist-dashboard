@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, User, LogOut } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { ArrowLeft, User, LogOut, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { ChangeCurrentPasswordForm } from "@/components/auth/ChangeCurrentPasswordForm";
 
 interface PageHeaderProps {
   title: string;
@@ -13,6 +15,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, showBackButton = true, backTo = "/dashboard" }: PageHeaderProps) {
   const { funcionario, logout } = useAuth();
   const navigate = useNavigate();
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   return (
     <header className="container mx-auto px-4 py-6">
@@ -40,6 +43,11 @@ export function PageHeader({ title, showBackButton = true, backTo = "/dashboard"
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setChangePasswordOpen(true)}>
+              <Lock className="mr-2 h-4 w-4" />
+              Trocar Senha
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
               Sair
@@ -47,6 +55,11 @@ export function PageHeader({ title, showBackButton = true, backTo = "/dashboard"
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      
+      <ChangeCurrentPasswordForm 
+        open={changePasswordOpen} 
+        onOpenChange={setChangePasswordOpen} 
+      />
     </header>
   );
 }

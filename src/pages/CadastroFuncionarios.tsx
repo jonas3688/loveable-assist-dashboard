@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Users } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface FuncionarioTI {
   id: number;
@@ -131,6 +132,31 @@ export default function CadastroFuncionarios() {
     setDialogOpen(true);
   };
 
+  const deletarFuncionario = async (funcionario: FuncionarioTI) => {
+    try {
+      const { error } = await supabase
+        .from('funcionarios_ti')
+        .delete()
+        .eq('id', funcionario.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso!",
+        description: "Funcionário excluído com sucesso"
+      });
+
+      carregarFuncionarios();
+    } catch (error: any) {
+      console.error('Erro ao deletar funcionário:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir funcionário",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <PageHeader title="Cadastro de Funcionários" />
@@ -238,13 +264,44 @@ export default function CadastroFuncionarios() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => editarFuncionario(funcionario)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => editarFuncionario(funcionario)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir o funcionário <strong>{funcionario.nome}</strong>? 
+                              Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deletarFuncionario(funcionario)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
