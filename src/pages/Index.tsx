@@ -55,7 +55,7 @@ const Index = () => {
 
         {/* Navigation Cards */}
         <div className="flex justify-center">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
+          <div className={`grid ${isAdmin ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-8 max-w-2xl`}>
             <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
               <CardHeader className="text-center">
                 <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
