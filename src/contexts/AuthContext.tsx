@@ -78,6 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setFuncionario(funcionarioData);
       localStorage.setItem('funcionario_ti', JSON.stringify(funcionarioData));
       
+      // Redirecionar baseado no tipo de usuário
+      if (funcionarioData.permissao === 'admin') {
+        window.location.href = '/dashboard';
+      } else {
+        window.location.href = '/chamados-ti';
+      }
+      
       return { success: true };
     } catch (error) {
       console.error('Erro no login:', error);

@@ -37,7 +37,7 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-8">
-        <div className="text-center max-w-4xl mx-auto mb-12">
+        <div className="text-center max-w-2xl mx-auto mb-12">
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-gradient-primary rounded-2xl shadow-hover">
               <Headphones className="w-12 h-12 text-primary-foreground" />
@@ -45,58 +45,37 @@ const Index = () => {
           </div>
           
           <h2 className="text-4xl font-bold text-foreground mb-6 bg-gradient-primary bg-clip-text text-transparent">
-            Sistema de Gerenciamento
+            Painel Administrativo
           </h2>
           
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Sistema interno de gerenciamento de chamados de suporte técnico.
-            Gerencie, acompanhe e resolva solicitações de forma eficiente.
+          <p className="text-xl text-muted-foreground mb-8">
+            Gerencie o sistema de TI da V12 Veículos
           </p>
         </div>
 
         {/* Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
-            <CardHeader className="text-center">
-              <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Headphones className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <CardTitle>Chamados de TI</CardTitle>
-              <CardDescription>
-                Gerencie solicitações e suporte técnico
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full">
-                <Link to="/chamados-ti">
-                  Acessar Chamados
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
+            <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Headphones className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <CardTitle>Chamados de TI</CardTitle>
+                <CardDescription>
+                  Gerencie solicitações e suporte técnico
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild className="w-full">
+                  <Link to="/chamados-ti">
+                    Acessar Chamados
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
-            <CardHeader className="text-center">
-              <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <CardTitle>Dashboards</CardTitle>
-              <CardDescription>
-                Visualize métricas e indicadores
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full">
-                <Link to="/dashboards">
-                  Ver Dashboards
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {isAdmin && (
             <Card className="bg-gradient-card border shadow-card hover:shadow-hover transition-all">
               <CardHeader className="text-center">
                 <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
@@ -116,7 +95,7 @@ const Index = () => {
                 </Button>
               </CardContent>
             </Card>
-          )}
+          </div>
         </div>
       </section>
     </main>

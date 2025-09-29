@@ -37,7 +37,8 @@ export default function Login() {
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao sistema"
       });
-      navigate('/dashboard');
+      // Redirecionar baseado no tipo de usuário
+      // A lógica de redirecionamento será feita pelo próprio contexto
     } else {
       toast({
         title: "Erro no login",
