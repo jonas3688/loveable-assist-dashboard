@@ -14,6 +14,8 @@ interface AuthContextType {
   logout: () => void;
   isAdmin: boolean;
   loading: boolean;
+  needsPasswordChange: boolean;
+  setNeedsPasswordChange: (needs: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [funcionario, setFuncionario] = useState<FuncionarioTI | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
 
   const isAdmin = funcionario?.permissao === 'admin';
 
@@ -75,15 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: 'Senha incorreta' };
       }
 
+      // Verificar se a senha é a padrão (123) para forçar mudança
+      if (senha === '123') {
+        setNeedsPasswordChange(true);
+      }
+
       setFuncionario(funcionarioData);
       localStorage.setItem('funcionario_ti', JSON.stringify(funcionarioData));
-      
-      // Redirecionar baseado no tipo de usuário
-      if (funcionarioData.permissao === 'admin') {
-        window.location.href = '/dashboard';
-      } else {
-        window.location.href = '/chamados-ti';
-      }
       
       return { success: true };
     } catch (error) {
@@ -94,11 +95,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setFuncionario(null);
+    setNeedsPasswordChange(false);
     localStorage.removeItem('funcionario_ti');
   };
 
   return (
-    <AuthContext.Provider value={{ funcionario, login, logout, isAdmin, loading }}>
+    <AuthContext.Provider value={{ 
+      funcionario, 
+      login, 
+      logout, 
+      isAdmin, 
+      loading, 
+      needsPasswordChange, 
+      setNeedsPasswordChange 
+    }}>
       {children}
     </AuthContext.Provider>
   );

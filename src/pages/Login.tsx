@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,14 +7,27 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Shield } from 'lucide-react';
+import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, funcionario, needsPasswordChange, setNeedsPasswordChange } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Se o usuário logou mas precisa trocar a senha, não redirecionar ainda
+    if (funcionario && !needsPasswordChange) {
+      // Redirecionar baseado no tipo de usuário
+      if (funcionario.permissao === 'admin') {
+        navigate('/dashboard');
+      } else {
+        navigate('/chamados-ti');
+      }
+    }
+  }, [funcionario, needsPasswordChange, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +50,6 @@ export default function Login() {
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao sistema"
       });
-      // Redirecionar baseado no tipo de usuário
-      // A lógica de redirecionamento será feita pelo próprio contexto
     } else {
       toast({
         title: "Erro no login",
@@ -49,6 +60,27 @@ export default function Login() {
     
     setLoading(false);
   };
+
+  const handlePasswordChanged = () => {
+    setNeedsPasswordChange(false);
+    // Redirecionar após mudança de senha
+    if (funcionario?.permissao === 'admin') {
+      navigate('/dashboard');
+    } else {
+      navigate('/chamados-ti');
+    }
+  };
+
+  // Se o usuário logou mas precisa trocar a senha
+  if (funcionario && needsPasswordChange) {
+    return (
+      <ChangePasswordForm 
+        funcionarioId={funcionario.id}
+        funcionarioNome={funcionario.nome}
+        onPasswordChanged={handlePasswordChanged}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
