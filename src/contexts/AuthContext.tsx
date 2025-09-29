@@ -49,10 +49,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: 'Funcionário não encontrado' };
       }
 
-      // Verificar senha usando a função do banco
+      // Buscar o hash da senha
+      const { data: senhaData, error: senhaError } = await supabase
+        .from('funcionarios_ti')
+        .select('senha_hash')
+        .eq('email', email)
+        .single();
+
+      if (senhaError || !senhaData?.senha_hash) {
+        return { success: false, error: 'Erro ao verificar credenciais' };
+      }
+
+      // Verificar senha usando a função do banco com o hash correto
       const { data: senhaCorreta, error: verifyError } = await supabase.rpc('verify_password', {
         password: senha,
-        hash: `(SELECT senha_hash FROM funcionarios_ti WHERE email = '${email}')`
+        hash: senhaData.senha_hash
       });
 
       if (verifyError) {
@@ -65,10 +76,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Verificar se a senha é a padrão (123) para forçar mudança
-      // Fazemos isso tentando verificar se a senha atual é "123"
       const { data: isPadraoSenha } = await supabase.rpc('verify_password', {
         password: '123',
-        hash: `(SELECT senha_hash FROM funcionarios_ti WHERE email = '${email}')`
+        hash: senhaData.senha_hash
       });
 
       if (isPadraoSenha) {
