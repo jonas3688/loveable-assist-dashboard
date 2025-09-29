@@ -674,7 +674,10 @@ export const ChamadoVisualizacao = ({
                             </div>
                           </SelectTrigger>
                           <SelectContent>
-                            {tecnicos?.map((tecnico) => (
+                            <SelectItem value="">
+                              <span className="text-muted-foreground">Limpar seleção</span>
+                            </SelectItem>
+                            {tecnicos?.filter(tecnico => tecnico.id !== chamado.assigned_func_ti_id).map((tecnico) => (
                               <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
                                 {tecnico.nome}
                               </SelectItem>
@@ -684,11 +687,11 @@ export const ChamadoVisualizacao = ({
                         <Button
                           variant="outline"
                           onClick={() => {
-                            if (tecnicoSelecionado) {
+                            if (tecnicoSelecionado && parseInt(tecnicoSelecionado) !== chamado.assigned_func_ti_id) {
                               transferirTecnicoMutation.mutate(parseInt(tecnicoSelecionado));
                             }
                           }}
-                          disabled={!tecnicoSelecionado || transferirTecnicoMutation.isPending}
+                          disabled={!tecnicoSelecionado || transferirTecnicoMutation.isPending || (tecnicoSelecionado && parseInt(tecnicoSelecionado) === chamado.assigned_func_ti_id)}
                         >
                           {transferirTecnicoMutation.isPending ? "Transferindo..." : "Confirmar"}
                         </Button>
