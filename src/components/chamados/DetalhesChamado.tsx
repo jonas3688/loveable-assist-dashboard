@@ -13,8 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ImageModal } from "@/components/ui/image-modal";
-import { ChamadoTI } from "@/types/chamados";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -35,6 +33,9 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ChamadoTI = Tables<"chamados_ti">;
 
 interface DetalhesChamadoProps {
   chamado: ChamadoTI;
@@ -49,8 +50,6 @@ const statusOptions = [
 ];
 
 const AnexosSection = ({ chamadoId }: { chamadoId: number }) => {
-  const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null);
-  
   const { data: anexos, isLoading } = useQuery({
     queryKey: ["anexos-chamado", chamadoId],
     queryFn: async () => {
@@ -84,79 +83,84 @@ const AnexosSection = ({ chamadoId }: { chamadoId: number }) => {
   }
   
   return (
-    <>
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {anexos.map((anexo) => {
-            const publicUrl = `https://goarzjbrfizsldgdtdvm.supabase.co/storage/v1/object/public/${anexo.file_path}`;
-            const isImage = anexo.tipo === 'imagem';
-            const isAudio = anexo.tipo === 'audio';
-            const isDocument = anexo.tipo === 'documento';
-            
-            if (isImage) {
-              return (
-                <div key={anexo.id_anexo} className="relative group cursor-pointer">
-                  <img
-                    src={publicUrl}
-                    alt={`Anexo ${anexo.id_anexo}`}
-                    className="w-full h-32 object-cover rounded-lg border shadow-sm hover:shadow-md transition-shadow"
-                    onClick={() => setSelectedImage({ url: publicUrl, alt: `Anexo ${anexo.id_anexo}` })}
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
-                    <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-              );
-            }
-            
-            if (isAudio) {
-              return (
-                <div
-                  key={anexo.id_anexo}
-                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors bg-blue-50 border-blue-200"
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {anexos.map((anexo) => {
+          const publicUrl = `https://goarzjbrfizsldgdtdvm.supabase.co/storage/v1/object/public/${anexo.file_path}`;
+          const isImage = anexo.tipo === 'imagem';
+          const isAudio = anexo.tipo === 'audio';
+          const isDocument = anexo.tipo === 'documento';
+          
+          if (isImage) {
+            return (
+              <div key={anexo.id_anexo} className="relative group cursor-pointer">
+                <img
+                  src={publicUrl}
+                  alt={`Anexo ${anexo.id_anexo}`}
+                  className="w-full h-32 object-cover rounded-lg border shadow-sm hover:shadow-md transition-shadow"
                   onClick={() => window.open(publicUrl, '_blank')}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <span className="text-sm font-medium truncate text-blue-700">
-                      Ouvir Áudio
-                    </span>
-                  </div>
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
+                  <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-              );
-            }
-            
-            if (isDocument) {
-              return (
-                <div
-                  key={anexo.id_anexo}
-                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors bg-green-50 border-green-200"
-                  onClick={() => window.open(publicUrl, '_blank')}
-                >
-                  <div className="flex items-center gap-2">
-                    <Paperclip className="w-5 h-5 text-green-600" />
-                    <span className="text-sm font-medium truncate text-green-700">
-                      Baixar Documento
-                    </span>
+              </div>
+            );
+          }
+          
+          if (isAudio) {
+            return (
+              <div
+                key={anexo.id_anexo}
+                className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors bg-blue-50 border-blue-200"
+                onClick={() => window.open(publicUrl, '_blank')}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
+                  <span className="text-sm font-medium truncate text-blue-700">
+                    Ouvir Áudio
+                  </span>
                 </div>
-              );
-            }
-            
-            return null;
-          })}
-        </div>
+              </div>
+            );
+          }
+          
+          if (isDocument) {
+            return (
+              <div
+                key={anexo.id_anexo}
+                className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors bg-green-50 border-green-200"
+                onClick={() => window.open(publicUrl, '_blank')}
+              >
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium truncate text-green-700">
+                    Baixar Documento
+                  </span>
+                </div>
+              </div>
+            );
+          }
+          
+          // Fallback para outros tipos
+          return (
+            <div
+              key={anexo.id_anexo}
+              className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => window.open(publicUrl, '_blank')}
+            >
+              <div className="flex items-center gap-2">
+                <Paperclip className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium truncate">
+                  Anexo {anexo.id_anexo}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
-      
-      <ImageModal
-        isOpen={selectedImage !== null}
-        onClose={() => setSelectedImage(null)}
-        imageUrl={selectedImage?.url || ""}
-        alt={selectedImage?.alt || ""}
-      />
-    </>
+    </div>
   );
 };
 

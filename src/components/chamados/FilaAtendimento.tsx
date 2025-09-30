@@ -9,7 +9,9 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChamadoVisualizacao } from "./ChamadoVisualizacao";
 import { useToast } from "@/hooks/use-toast";
-import { ChamadoTI } from "@/types/chamados";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ChamadoTI = Tables<"chamados_ti">;
 
 const AnexosViewer = ({ anexos }: { anexos: any }) => {
   if (!anexos || (Array.isArray(anexos) && anexos.length === 0)) {
