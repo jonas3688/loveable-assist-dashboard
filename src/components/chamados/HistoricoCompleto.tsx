@@ -14,9 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChamadoVisualizacao } from "./ChamadoVisualizacao";
 import { toast } from "sonner";
-import type { Tables } from "@/integrations/supabase/types";
-
-type ChamadoTI = Tables<"chamados_ti">;
+import { ChamadoTI } from "@/types/chamados";
 
 const statusOptions = [
   { value: "todos", label: "Todos os Status" },

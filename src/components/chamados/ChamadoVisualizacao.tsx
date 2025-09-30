@@ -11,36 +11,7 @@ import { toast } from "sonner";
 import { HistoricoTimeline } from "./HistoricoTimeline";
 import { ImageModal } from "@/components/ui/image-modal";
 import { useState } from "react";
-
-interface ChamadoTI {
-  id_chamado: number;
-  session_id: string;
-  nome_funcionario: string | null;
-  loja: string | null;
-  email: string | null;
-  telefone_contato: string | null;
-  descricao_problema: string | null;
-  departamento: string | null;
-  status: string;
-  tentativas_ia: number | null;
-  tecnico_responsavel: string | null;
-  created_at: string;
-  updated_at: string;
-  solucao_aplicada: string | null;
-  anexos: any[];
-  prioridade: string | null;
-  loja_id: number | null;
-  funcionario_id: number | null;
-  assigned_func_ti_id: number | null;
-}
-
-interface FuncionarioTI {
-  id: number;
-  nome: string;
-  email: string;
-  permissao: string;
-  senha_hash: string;
-}
+import { ChamadoTI, FuncionarioTI } from "@/types/chamados";
 
 interface ChamadoVisualizacaoProps {
   chamado: ChamadoTI;

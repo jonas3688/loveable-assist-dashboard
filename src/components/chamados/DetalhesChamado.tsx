@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageModal } from "@/components/ui/image-modal";
+import { ChamadoTI } from "@/types/chamados";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -34,9 +35,6 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import type { Tables } from "@/integrations/supabase/types";
-
-type ChamadoTI = Tables<"chamados_ti">;
 
 interface DetalhesChamadoProps {
   chamado: ChamadoTI;
