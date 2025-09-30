@@ -13,29 +13,36 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type ChamadoTI = Tables<"chamados_ti">;
 
-const AnexosViewer = ({ anexos }: { anexos: any }) => {
-  if (!anexos || (Array.isArray(anexos) && anexos.length === 0)) {
+const AnexosViewer = ({ chamadoId }: { chamadoId: number }) => {
+  const { data: anexos, isLoading } = useQuery({
+    queryKey: ["anexos-preview", chamadoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chamados_ti_anexos")
+        .select("*")
+        .eq("id_chamado", chamadoId);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return <span className="text-muted-foreground text-xs">Carregando...</span>;
+  }
+
+  if (!anexos || anexos.length === 0) {
     return <span className="text-muted-foreground text-xs">Sem anexos</span>;
   }
 
-  const anexosList = Array.isArray(anexos) ? anexos : [anexos];
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-  
-  const images = anexosList.filter((anexo: any) => {
-    if (typeof anexo === 'string') {
-      return imageExtensions.some(ext => anexo.toLowerCase().includes(ext));
-    }
-    if (anexo?.url) {
-      return imageExtensions.some(ext => anexo.url.toLowerCase().includes(ext));
-    }
-    return false;
-  });
+  const images = anexos.filter(anexo => anexo.tipo === 'imagem');
+  const totalAnexos = anexos.length;
 
   if (images.length === 0) {
     return (
       <div className="flex items-center gap-1 text-muted-foreground text-xs">
         <Paperclip className="w-3 h-3" />
-        {anexosList.length} anexo(s)
+        {totalAnexos} anexo(s)
       </div>
     );
   }
@@ -45,21 +52,23 @@ const AnexosViewer = ({ anexos }: { anexos: any }) => {
       <div className="flex items-center gap-1 text-muted-foreground text-xs">
         <ImageIcon className="w-3 h-3" />
         {images.length} imagem(ns)
+        {totalAnexos > images.length && `, ${totalAnexos - images.length} outros`}
       </div>
       <div className="flex gap-1">
-        {images.slice(0, 3).map((anexo: any, index: number) => {
-          const imageUrl = typeof anexo === 'string' ? anexo : anexo?.url || anexo;
-          const { data: { publicUrl } } = supabase.storage
-            .from('anexos-chamados-ti')
-            .getPublicUrl(imageUrl);
+        {images.slice(0, 3).map((anexo, index) => {
+          const publicUrl = `https://goarzjbrfizsldgdtdvm.supabase.co/storage/v1/object/public/anexos-chamados-ti/${anexo.file_path.split('/').pop()}`;
           
           return (
             <img
-              key={index}
+              key={anexo.id_anexo}
               src={publicUrl}
               alt={`Anexo ${index + 1}`}
               className="w-8 h-8 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => window.open(publicUrl, '_blank')}
+              onError={(e) => {
+                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                e.currentTarget.alt = 'Erro ao carregar';
+              }}
             />
           );
         })}
@@ -184,7 +193,7 @@ export const FilaAtendimento = () => {
                   </p>
                 </TableCell>
                 <TableCell>
-                  <AnexosViewer anexos={(chamado as any).anexos} />
+                  <AnexosViewer chamadoId={chamado.id_chamado} />
                 </TableCell>
                 <TableCell>
                   <Button
