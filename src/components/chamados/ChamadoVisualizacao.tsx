@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageModal } from "@/components/ui/image-modal";
 import { 
   User, 
   Building, 
@@ -60,17 +61,25 @@ interface ChamadoVisualizacaoProps {
   onChamadoAtualizado?: () => void;
 }
 
-const AnexosSection = ({ chamadoId }: { chamadoId: number }) => {
+const AnexosSection = ({ chamadoId, onImageClick }: { 
+  chamadoId: number;
+  onImageClick: (imageUrl: string) => void;
+}) => {
   const { data: anexos, isLoading } = useQuery({
     queryKey: ["anexos-chamado", chamadoId],
     queryFn: async () => {
+      console.log("Consultando anexos para chamado:", chamadoId);
       const { data, error } = await supabase
         .from("chamados_ti_anexos")
         .select("*")
         .eq("id_chamado", chamadoId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar anexos:", error);
+        throw error;
+      }
+      console.log("Anexos encontrados:", data);
       return data;
     },
   });
@@ -109,7 +118,7 @@ const AnexosSection = ({ chamadoId }: { chamadoId: number }) => {
                   src={publicUrl}
                   alt={`Anexo ${anexo.id_anexo}`}
                   className="w-full h-32 object-cover rounded-lg border shadow-sm hover:shadow-md transition-shadow"
-                  onClick={() => window.open(publicUrl, '_blank')}
+                  onClick={() => onImageClick(publicUrl)}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
                   <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -186,6 +195,7 @@ export const ChamadoVisualizacao = ({
   const [statusSelecionado, setStatusSelecionado] = useState<string>("");
   const [statusConfirmado, setStatusConfirmado] = useState<boolean>(false);
   const [solucaoAplicada, setSolucaoAplicada] = useState(chamado.solucao_aplicada || "");
+  const [selectedImage, setSelectedImage] = useState<string>("");
   
   // Atualizar o estado local quando o chamado original mudar
   useEffect(() => {
@@ -616,7 +626,10 @@ export const ChamadoVisualizacao = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <AnexosSection chamadoId={chamado.id_chamado} />
+                <AnexosSection 
+                  chamadoId={chamado.id_chamado}
+                  onImageClick={setSelectedImage}
+                />
               </CardContent>
             </Card>
 
@@ -896,6 +909,13 @@ export const ChamadoVisualizacao = ({
           </div>
         </div>
       </DialogContent>
+
+      <ImageModal
+        isOpen={!!selectedImage}
+        onClose={() => setSelectedImage("")}
+        imageUrl={selectedImage}
+        imageAlt="Anexo do chamado em tamanho maior"
+      />
     </Dialog>
   );
 };
