@@ -121,10 +121,7 @@ const AnexosSection = ({ chamadoId, onImageClick }: {
                   src={publicUrl}
                   alt={`Anexo ${anexo.id_anexo}`}
                   className="w-full h-32 object-cover rounded-lg border shadow-sm hover:shadow-md transition-shadow"
-                  onClick={() => {
-                    console.log("Clicou na imagem, chamando onImageClick com:", publicUrl);
-                    onImageClick(publicUrl);
-                  }}
+            onClick={() => onImageClick(publicUrl)}
                   onError={(e) => {
                     console.error("Erro ao carregar imagem:", publicUrl);
                     e.currentTarget.style.backgroundColor = '#f3f4f6';
@@ -209,7 +206,7 @@ export const ChamadoVisualizacao = ({
   const [selectedImage, setSelectedImage] = useState<string>("");
   
   // Log quando selectedImage muda
-  console.log("ChamadoVisualizacao - selectedImage:", selectedImage);
+  
   
   // Atualizar o estado local quando o chamado original mudar
   useEffect(() => {

@@ -38,46 +38,15 @@ const AnexosViewer = ({ chamadoId }: { chamadoId: number }) => {
   const images = anexos.filter(anexo => anexo.tipo === 'imagem');
   const totalAnexos = anexos.length;
 
-  if (images.length === 0) {
-    return (
-      <div className="flex items-center gap-1 text-muted-foreground text-xs">
-        <Paperclip className="w-3 h-3" />
-        {totalAnexos} anexo(s)
-      </div>
-    );
-  }
-
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 text-muted-foreground text-xs">
-        <ImageIcon className="w-3 h-3" />
-        {images.length} imagem(ns)
-        {totalAnexos > images.length && `, ${totalAnexos - images.length} outros`}
-      </div>
-      <div className="flex gap-1">
-        {images.slice(0, 3).map((anexo, index) => {
-          const publicUrl = `https://goarzjbrfizsldgdtdvm.supabase.co/storage/v1/object/public/anexos-chamados-ti/${anexo.file_path.split('/').pop()}`;
-          
-          return (
-            <img
-              key={anexo.id_anexo}
-              src={publicUrl}
-              alt={`Anexo ${index + 1}`}
-              className="w-8 h-8 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => window.open(publicUrl, '_blank')}
-              onError={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.alt = 'Erro ao carregar';
-              }}
-            />
-          );
-        })}
-        {images.length > 3 && (
-          <div className="w-8 h-8 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">
-            +{images.length - 3}
-          </div>
-        )}
-      </div>
+    <div className="flex items-center gap-1 text-muted-foreground text-xs">
+      <Paperclip className="w-3 h-3" />
+      {totalAnexos} anexo(s)
+      {images.length > 0 && (
+        <span className="ml-1">
+          ({images.length} imagem{images.length > 1 ? 'ns' : ''})
+        </span>
+      )}
     </div>
   );
 };

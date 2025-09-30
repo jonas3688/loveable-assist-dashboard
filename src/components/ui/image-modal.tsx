@@ -10,7 +10,6 @@ interface ImageModalProps {
 }
 
 export const ImageModal = ({ isOpen, onClose, imageUrl, imageAlt = "Imagem em tamanho maior" }: ImageModalProps) => {
-  console.log("ImageModal - isOpen:", isOpen, "imageUrl:", imageUrl);
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
