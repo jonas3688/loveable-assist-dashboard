@@ -93,12 +93,15 @@ const AnexosSection = ({ chamadoId, onImageClick }: {
   
   return (
     <div className="space-y-4">
+      <p className="text-sm text-green-600">Anexos encontrados: {anexos.length}</p>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {anexos.map((anexo) => {
-          const publicUrl = `https://goarzjbrfizsldgdtdvm.supabase.co/storage/v1/object/public/${anexo.file_path}`;
+          const publicUrl = `https://goarzjbrfizsldgdtdvm.supabase.co/storage/v1/object/public/anexos-chamados-ti/${anexo.file_path.split('/').pop()}`;
           const isImage = anexo.tipo === 'imagem';
           const isAudio = anexo.tipo === 'audio';
           const isDocument = anexo.tipo === 'documento';
+          
+          console.log("Renderizando anexo:", anexo, "URL:", publicUrl, "Tipo:", anexo.tipo);
           
           if (isImage) {
             return (
@@ -107,7 +110,15 @@ const AnexosSection = ({ chamadoId, onImageClick }: {
                   src={publicUrl}
                   alt={`Anexo ${anexo.id_anexo}`}
                   className="w-full h-32 object-cover rounded-lg border shadow-sm hover:shadow-md transition-shadow"
-                  onClick={() => onImageClick(publicUrl)}
+                  onClick={() => {
+                    console.log("Clicou na imagem, chamando onImageClick com:", publicUrl);
+                    onImageClick(publicUrl);
+                  }}
+                  onError={(e) => {
+                    console.error("Erro ao carregar imagem:", publicUrl);
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.alt = 'Erro ao carregar imagem';
+                  }}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded-lg flex items-center justify-center">
                   <ImageIcon className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
