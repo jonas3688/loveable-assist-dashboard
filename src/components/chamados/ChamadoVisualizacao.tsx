@@ -723,9 +723,6 @@ export const ChamadoVisualizacao = ({
                             </div>
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">
-                              <span className="text-muted-foreground">Limpar seleção</span>
-                            </SelectItem>
                             {tecnicos?.filter(tecnico => tecnico.id !== chamado.assigned_func_ti_id).map((tecnico) => (
                               <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
                                 {tecnico.nome}
@@ -744,6 +741,16 @@ export const ChamadoVisualizacao = ({
                         >
                           {transferirTecnicoMutation.isPending ? "Transferindo..." : "Confirmar"}
                         </Button>
+                        {tecnicoSelecionado && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setTecnicoSelecionado("")}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            Limpar
+                          </Button>
+                        )}
                       </div>
                     </div>
 
