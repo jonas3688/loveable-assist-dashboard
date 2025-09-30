@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -49,8 +49,31 @@ const statusOptions = [
   { value: "fechado", label: "Fechado", icon: XCircle },
 ];
 
-const AnexosSection = ({ anexos }: { anexos: any }) => {
-  if (!anexos || (Array.isArray(anexos) && anexos.length === 0)) {
+const AnexosSection = ({ chamadoId }: { chamadoId: number }) => {
+  const { data: anexos, isLoading } = useQuery({
+    queryKey: ["anexos-chamado", chamadoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chamados_ti_anexos")
+        .select("*")
+        .eq("id_chamado", chamadoId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        <Paperclip className="w-8 h-8 mx-auto mb-2 opacity-50 animate-pulse" />
+        <p className="text-sm">Carregando anexos...</p>
+      </div>
+    );
+  }
+
+  if (!anexos || anexos.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
         <Paperclip className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -58,27 +81,22 @@ const AnexosSection = ({ anexos }: { anexos: any }) => {
       </div>
     );
   }
-
-  const anexosList = Array.isArray(anexos) ? anexos : [anexos];
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
   
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {anexosList.map((anexo: any, index: number) => {
-          const anexoUrl = typeof anexo === 'string' ? anexo : anexo?.url || anexo;
-          const isImage = imageExtensions.some(ext => anexoUrl.toLowerCase().includes(ext));
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('anexos-chamados-ti')
-            .getPublicUrl(anexoUrl);
+        {anexos.map((anexo) => {
+          const publicUrl = `https://goarzjbrfizsldgdtdvm.supabase.co/storage/v1/object/public/${anexo.file_path}`;
+          const isImage = anexo.tipo === 'imagem';
+          const isAudio = anexo.tipo === 'audio';
+          const isDocument = anexo.tipo === 'documento';
           
           if (isImage) {
             return (
-              <div key={index} className="relative group cursor-pointer">
+              <div key={anexo.id_anexo} className="relative group cursor-pointer">
                 <img
                   src={publicUrl}
-                  alt={`Anexo ${index + 1}`}
+                  alt={`Anexo ${anexo.id_anexo}`}
                   className="w-full h-32 object-cover rounded-lg border shadow-sm hover:shadow-md transition-shadow"
                   onClick={() => window.open(publicUrl, '_blank')}
                 />
@@ -87,22 +105,59 @@ const AnexosSection = ({ anexos }: { anexos: any }) => {
                 </div>
               </div>
             );
-          } else {
+          }
+          
+          if (isAudio) {
             return (
               <div
-                key={index}
-                className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                key={anexo.id_anexo}
+                className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors bg-blue-50 border-blue-200"
                 onClick={() => window.open(publicUrl, '_blank')}
               >
                 <div className="flex items-center gap-2">
-                  <Paperclip className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm font-medium truncate">
-                    Anexo {index + 1}
+                  <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                  <span className="text-sm font-medium truncate text-blue-700">
+                    Ouvir Áudio
                   </span>
                 </div>
               </div>
             );
           }
+          
+          if (isDocument) {
+            return (
+              <div
+                key={anexo.id_anexo}
+                className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors bg-green-50 border-green-200"
+                onClick={() => window.open(publicUrl, '_blank')}
+              >
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium truncate text-green-700">
+                    Baixar Documento
+                  </span>
+                </div>
+              </div>
+            );
+          }
+          
+          // Fallback para outros tipos
+          return (
+            <div
+              key={anexo.id_anexo}
+              className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => window.open(publicUrl, '_blank')}
+            >
+              <div className="flex items-center gap-2">
+                <Paperclip className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium truncate">
+                  Anexo {anexo.id_anexo}
+                </span>
+              </div>
+            </div>
+          );
         })}
       </div>
     </div>
@@ -370,7 +425,7 @@ export const DetalhesChamado = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <AnexosSection anexos={(chamado as any).anexos} />
+              <AnexosSection chamadoId={chamado.id_chamado} />
             </CardContent>
           </Card>
 
