@@ -137,7 +137,8 @@ export function ChatComponent({ chamadoId, onChamadoCreated }: ChatComponentProp
             </div>
           ) : mensagens && mensagens.length > 0 ? (
             mensagens.map((msg: any) => {
-              const isOwn = msg.remetente_id === perfil?.id_usuario;
+              // Mensagens do sistema ou técnico ficam à esquerda, do usuário à direita
+              const isOwn = msg.tipo_remetente === 'usuario' && msg.remetente_id === perfil?.id_usuario;
               const usuario = Array.isArray(msg.usuarios) ? msg.usuarios[0] : msg.usuarios;
               
               return (
@@ -153,7 +154,9 @@ export function ChatComponent({ chamadoId, onChamadoCreated }: ChatComponentProp
                     }`}
                   >
                     <div className="font-semibold text-sm mb-1">
-                      {usuario?.nome_completo || 'Usuário'}
+                      {msg.tipo_remetente === 'sistema' 
+                        ? 'Sistema' 
+                        : usuario?.nome_completo || 'Usuário'}
                       {usuario?.tipo_usuario === 'tecnico' && ' (Técnico)'}
                     </div>
                     <div className="text-sm">{msg.conteudo_mensagem}</div>
