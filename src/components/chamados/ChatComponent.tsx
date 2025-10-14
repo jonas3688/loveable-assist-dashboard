@@ -54,7 +54,7 @@ export function ChatComponent({ chamadoId, onChamadoCreated }: ChatComponentProp
     if (!chamadoId) return;
 
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel(`mensagens-chat-${chamadoId}`)
       .on(
         'postgres_changes',
         {
@@ -63,8 +63,17 @@ export function ChatComponent({ chamadoId, onChamadoCreated }: ChatComponentProp
           table: 'mensagens_chat',
           filter: `chamado_id=eq.${chamadoId}`,
         },
-        () => {
-          // Atualizar lista de mensagens
+        (payload) => {
+          console.log('Nova mensagem recebida via Realtime:', payload);
+          // Adicionar a nova mensagem instantaneamente
+          queryClient.setQueryData(['mensagens-chat', chamadoId], (old: any) => {
+            if (!old) return [payload.new];
+            // Evitar duplicatas
+            const exists = old.some((msg: any) => msg.id === payload.new.id);
+            if (exists) return old;
+            return [...old, payload.new];
+          });
+          // Também invalidar para garantir sincronização completa
           queryClient.invalidateQueries({ queryKey: ['mensagens-chat', chamadoId] });
         }
       )

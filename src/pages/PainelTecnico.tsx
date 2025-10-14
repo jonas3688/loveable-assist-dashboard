@@ -1,6 +1,6 @@
 // Card 3: Interface do técnico de TI (Painel Principal)
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import { ptBR } from 'date-fns/locale';
 export default function PainelTecnico() {
   const { user } = useNewAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [filtroStatus, setFiltroStatus] = useState<string>('todos');
   const [busca, setBusca] = useState('');
 
@@ -115,6 +116,50 @@ export default function PainelTecnico() {
       return data;
     },
   });
+
+  // Realtime subscriptions para todas as listas
+  useEffect(() => {
+    // Subscription para fila de atendimento
+    const filaChannel = supabase
+      .channel('painel-fila-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chamados',
+          filter: 'status=eq.aberto',
+        },
+        (payload) => {
+          console.log('Fila atualizada:', payload);
+          queryClient.invalidateQueries({ queryKey: ['fila-atendimento'] });
+        }
+      )
+      .subscribe();
+
+    // Subscription para todos os chamados (histórico)
+    const historicoChannel = supabase
+      .channel('painel-historico-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chamados',
+        },
+        (payload) => {
+          console.log('Histórico atualizado:', payload);
+          queryClient.invalidateQueries({ queryKey: ['historico-completo', filtroStatus, busca] });
+          queryClient.invalidateQueries({ queryKey: ['meus-chamados-tecnico', user?.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(filaChannel);
+      supabase.removeChannel(historicoChannel);
+    };
+  }, [queryClient, user?.id, filtroStatus, busca]);
 
   const handleAssumirChamado = async (chamadoId: number) => {
     if (!user?.id) return;

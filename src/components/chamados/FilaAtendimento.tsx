@@ -68,8 +68,31 @@ export const FilaAtendimento = () => {
       if (error) throw error;
       return data as ChamadoTI[];
     },
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
   });
+
+  // Realtime subscription para fila de atendimento
+  useEffect(() => {
+    const channel = supabase
+      .channel('chamados-fila-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chamados_ti',
+          filter: 'status=eq.aberto',
+        },
+        (payload) => {
+          console.log('Fila atualizada via Realtime:', payload);
+          queryClient.invalidateQueries({ queryKey: ["chamados-fila"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleVisualizarChamado = (chamado: ChamadoTI) => {
     setChamadoSelecionado(chamado);

@@ -1,6 +1,6 @@
 // Card 2: Interface do funcionário ("Meus Chamados")
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNewAuth } from '@/contexts/NewAuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { ptBR } from 'date-fns/locale';
 
 export default function MeusChamados() {
   const { perfil } = useNewAuth();
+  const queryClient = useQueryClient();
   const [activeChamadoId, setActiveChamadoId] = useState<number | null>(null);
 
   // Query para buscar chamados do usuário
@@ -33,6 +34,32 @@ export default function MeusChamados() {
     },
     enabled: !!perfil?.id_usuario,
   });
+
+  // Realtime subscription para novos chamados e atualizações
+  useEffect(() => {
+    if (!perfil?.id_usuario) return;
+
+    const channel = supabase
+      .channel('meus-chamados-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chamados',
+          filter: `usuario_id=eq.${perfil.id_usuario}`,
+        },
+        (payload) => {
+          console.log('Chamado atualizado via Realtime:', payload);
+          queryClient.invalidateQueries({ queryKey: ['meus-chamados', perfil.id_usuario] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [perfil?.id_usuario, queryClient]);
 
   const handleNovoChamado = () => {
     setActiveChamadoId(null);
