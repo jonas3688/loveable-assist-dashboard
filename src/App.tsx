@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { NewAuthProvider } from "@/contexts/NewAuthContext";
 import { NewProtectedRoute } from "@/components/layout/NewProtectedRoute";
+import Index from "./pages/Index";
 import NewLogin from "./pages/NewLogin";
 import MeusChamados from "./pages/MeusChamados";
 import PainelTecnico from "./pages/PainelTecnico";
@@ -20,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <NewAuthProvider>
           <Routes>
+            <Route path="/" element={<Index />} />
             <Route path="/login" element={<NewLogin />} />
             <Route path="/chamados" element={
               <NewProtectedRoute>
