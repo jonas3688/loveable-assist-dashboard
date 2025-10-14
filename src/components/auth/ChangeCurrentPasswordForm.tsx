@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Shield, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNewAuth } from '@/contexts/NewAuthContext';
 
 interface ChangeCurrentPasswordFormProps {
   open: boolean;
@@ -22,7 +22,7 @@ export function ChangeCurrentPasswordForm({ open, onOpenChange }: ChangeCurrentP
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { funcionario } = useAuth();
+  const { perfil } = useNewAuth();
 
   const resetForm = () => {
     setSenhaAtual('');
@@ -36,7 +36,7 @@ export function ChangeCurrentPasswordForm({ open, onOpenChange }: ChangeCurrentP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!funcionario) {
+    if (!perfil) {
       toast({
         title: "Erro",
         description: "Usuário não encontrado",
@@ -86,7 +86,7 @@ export function ChangeCurrentPasswordForm({ open, onOpenChange }: ChangeCurrentP
     try {
       const { data, error } = await supabase.functions.invoke('change-current-password', {
         body: {
-          funcionario_id: funcionario.id,
+          funcionario_id: perfil.id_usuario,
           senha_atual: senhaAtual,
           nova_senha: novaSenha
         }
