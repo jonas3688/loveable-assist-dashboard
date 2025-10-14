@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ArrowLeft, User, LogOut, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useNewAuth } from "@/contexts/NewAuthContext";
 import { ChangeCurrentPasswordForm } from "@/components/auth/ChangeCurrentPasswordForm";
 
 interface PageHeaderProps {
@@ -12,8 +12,8 @@ interface PageHeaderProps {
   backTo?: string;
 }
 
-export function PageHeader({ title, showBackButton = true, backTo = "/dashboard" }: PageHeaderProps) {
-  const { funcionario, logout } = useAuth();
+export function PageHeader({ title, showBackButton = true, backTo = "/" }: PageHeaderProps) {
+  const { perfil, logout } = useNewAuth();
   const navigate = useNavigate();
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
@@ -39,7 +39,7 @@ export function PageHeader({ title, showBackButton = true, backTo = "/dashboard"
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
               <User className="mr-2 h-4 w-4" />
-              {funcionario?.nome}
+              {perfil?.nome_completo}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
