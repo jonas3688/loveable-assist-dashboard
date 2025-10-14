@@ -16,6 +16,8 @@ import { useNewAuth } from '@/contexts/NewAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ChamadoVisualizacao } from '@/components/chamados/ChamadoVisualizacao';
+import { ChatComponent } from '@/components/chamados/ChatComponent';
 
 export default function PainelTecnico() {
   const { user } = useNewAuth();
@@ -23,6 +25,8 @@ export default function PainelTecnico() {
   const queryClient = useQueryClient();
   const [filtroStatus, setFiltroStatus] = useState<string>('todos');
   const [busca, setBusca] = useState('');
+  const [chamadoSelecionado, setChamadoSelecionado] = useState<any>(null);
+  const [isVisualizacaoOpen, setIsVisualizacaoOpen] = useState(false);
 
   // Query para fila de atendimento
   const { data: filaAtendimento, refetch: refetchFila } = useQuery({
@@ -257,7 +261,14 @@ export default function PainelTecnico() {
                           : chamado.usuarios;
 
                         return (
-                          <TableRow key={chamado.id}>
+                          <TableRow 
+                            key={chamado.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => {
+                              setChamadoSelecionado(chamado);
+                              setIsVisualizacaoOpen(true);
+                            }}
+                          >
                             <TableCell className="font-mono">#{chamado.id}</TableCell>
                             <TableCell>{chamado.titulo || 'Sem título'}</TableCell>
                             <TableCell>{usuario?.nome_completo || 'N/A'}</TableCell>
@@ -268,7 +279,7 @@ export default function PainelTecnico() {
                                 locale: ptBR,
                               })}
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                               <Button
                                 size="sm"
                                 onClick={() => handleAssumirChamado(chamado.id)}
@@ -323,7 +334,14 @@ export default function PainelTecnico() {
                           : chamado.usuarios;
 
                         return (
-                          <TableRow key={chamado.id}>
+                          <TableRow 
+                            key={chamado.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => {
+                              setChamadoSelecionado(chamado);
+                              setIsVisualizacaoOpen(true);
+                            }}
+                          >
                             <TableCell className="font-mono">#{chamado.id}</TableCell>
                             <TableCell>{chamado.titulo || 'Sem título'}</TableCell>
                             <TableCell>{usuario?.nome_completo || 'N/A'}</TableCell>
@@ -409,7 +427,14 @@ export default function PainelTecnico() {
                           : chamado.tecnico;
 
                         return (
-                          <TableRow key={chamado.id}>
+                          <TableRow 
+                            key={chamado.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => {
+                              setChamadoSelecionado(chamado);
+                              setIsVisualizacaoOpen(true);
+                            }}
+                          >
                             <TableCell className="font-mono">#{chamado.id}</TableCell>
                             <TableCell>{chamado.titulo || 'Sem título'}</TableCell>
                             <TableCell>{usuario?.nome_completo || 'N/A'}</TableCell>
@@ -438,6 +463,23 @@ export default function PainelTecnico() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal de visualização do chamado */}
+      {chamadoSelecionado && (
+        <ChamadoVisualizacao
+          chamado={chamadoSelecionado}
+          isOpen={isVisualizacaoOpen}
+          onClose={() => {
+            setIsVisualizacaoOpen(false);
+            setChamadoSelecionado(null);
+          }}
+          onChamadoAtualizado={() => {
+            queryClient.invalidateQueries({ queryKey: ['fila-atendimento'] });
+            queryClient.invalidateQueries({ queryKey: ['meus-chamados-tecnico'] });
+            queryClient.invalidateQueries({ queryKey: ['historico-completo'] });
+          }}
+        />
+      )}
     </main>
   );
 }

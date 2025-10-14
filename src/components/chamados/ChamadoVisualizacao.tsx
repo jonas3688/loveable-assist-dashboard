@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ChatComponent } from "./ChatComponent";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -904,8 +905,16 @@ export const ChamadoVisualizacao = ({
             )}
           </div>
 
-          {/* Coluna Lateral - Timeline */}
+          {/* Coluna Lateral - Timeline e Chat */}
           <div className="space-y-6">
+            {/* Chat com o cliente */}
+            <div className="lg:h-[600px]">
+              <ChatComponent 
+                chamadoId={chamado.id_chamado}
+              />
+            </div>
+
+            {/* Timeline de Atividades */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Timeline de Atividades</CardTitle>
