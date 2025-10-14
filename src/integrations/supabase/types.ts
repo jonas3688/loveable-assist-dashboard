@@ -371,6 +371,60 @@ export type Database = {
         }
         Relationships: []
       }
+      chamados: {
+        Row: {
+          adicionado_kb: boolean | null
+          anexos: Json | null
+          created_at: string | null
+          id: number
+          modo_chat: string
+          solucao_aplicada: string | null
+          status: string
+          tecnico_id: number | null
+          titulo: string | null
+          usuario_id: number
+        }
+        Insert: {
+          adicionado_kb?: boolean | null
+          anexos?: Json | null
+          created_at?: string | null
+          id?: never
+          modo_chat?: string
+          solucao_aplicada?: string | null
+          status?: string
+          tecnico_id?: number | null
+          titulo?: string | null
+          usuario_id: number
+        }
+        Update: {
+          adicionado_kb?: boolean | null
+          anexos?: Json | null
+          created_at?: string | null
+          id?: never
+          modo_chat?: string
+          solucao_aplicada?: string | null
+          status?: string
+          tecnico_id?: number | null
+          titulo?: string | null
+          usuario_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamados_tecnico_id_fkey"
+            columns: ["tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id_usuario"]
+          },
+          {
+            foreignKeyName: "chamados_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
       chamados_ti: {
         Row: {
           anexos: Json | null
@@ -897,6 +951,48 @@ export type Database = {
         }
         Relationships: []
       }
+      mensagens_chat: {
+        Row: {
+          chamado_id: number
+          conteudo_mensagem: string | null
+          created_at: string | null
+          id: number
+          remetente_id: number
+          tipo_remetente: string
+        }
+        Insert: {
+          chamado_id: number
+          conteudo_mensagem?: string | null
+          created_at?: string | null
+          id?: never
+          remetente_id: number
+          tipo_remetente: string
+        }
+        Update: {
+          chamado_id?: number
+          conteudo_mensagem?: string | null
+          created_at?: string | null
+          id?: never
+          remetente_id?: number
+          tipo_remetente?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_chat_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensagens_chat_remetente_id_fkey"
+            columns: ["remetente_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id_usuario"]
+          },
+        ]
+      }
       respostas_cem_csi: {
         Row: {
           classificacao_nps: string | null
@@ -953,6 +1049,47 @@ export type Database = {
           sessionId?: string
         }
         Relationships: []
+      }
+      usuarios: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string | null
+          departamento: string | null
+          email: string
+          id_usuario: number
+          loja_id: number | null
+          nome_completo: string
+          tipo_usuario: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string | null
+          departamento?: string | null
+          email: string
+          id_usuario?: number
+          loja_id?: number | null
+          nome_completo: string
+          tipo_usuario?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string | null
+          departamento?: string | null
+          email?: string
+          id_usuario?: number
+          loja_id?: number | null
+          nome_completo?: string
+          tipo_usuario?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendedores: {
         Row: {
@@ -1041,7 +1178,7 @@ export type Database = {
       }
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
+        Returns: unknown
       }
       match_documents: {
         Args: { filter: Json; match_count: number; query_embedding: string }
