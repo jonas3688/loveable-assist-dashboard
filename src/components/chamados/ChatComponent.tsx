@@ -83,29 +83,49 @@ export function ChatComponent({ chamadoId, onChamadoCreated }: ChatComponentProp
   const handleEnviarMensagem = async () => {
     if (!mensagem.trim() || !perfil || !user) return;
 
+    const mensagemTexto = mensagem;
     setEnviando(true);
+    setMensagem(''); // Limpar input imediatamente
 
     try {
       const tipoRemetente = perfil.tipo_usuario === 'tecnico' ? 'tecnico' : 'usuario';
       
+      // Optimistic update - adicionar mensagem imediatamente na UI
+      const novaMensagem = {
+        id: Date.now(), // ID temporário
+        chamado_id: chamadoId,
+        remetente_id: perfil.id_usuario,
+        tipo_remetente: tipoRemetente,
+        conteudo_mensagem: mensagemTexto,
+        created_at: new Date().toISOString(),
+        usuarios: {
+          nome_completo: perfil.nome_completo,
+          tipo_usuario: perfil.tipo_usuario
+        }
+      };
+
+      queryClient.setQueryData(['mensagens-chat', chamadoId], (old: any) => {
+        return old ? [...old, novaMensagem] : [novaMensagem];
+      });
+
       const response = await webhookService.enviarMensagem({
         conversation_id: chamadoId || undefined,
         remetente_id: user.id,
         tipo_remetente: tipoRemetente,
-        texto_mensagem: mensagem,
+        texto_mensagem: mensagemTexto,
       });
 
       // Se é um novo chamado, o webhook retorna o novo_chamado_id
       if (!chamadoId && response.novo_chamado_id) {
         onChamadoCreated?.(response.novo_chamado_id);
       }
-
-      setMensagem('');
       
-      // Atualizar lista de mensagens
+      // Atualizar lista de mensagens para pegar os dados reais do servidor
       queryClient.invalidateQueries({ queryKey: ['mensagens-chat', chamadoId] });
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
+      // Reverter optimistic update em caso de erro
+      queryClient.invalidateQueries({ queryKey: ['mensagens-chat', chamadoId] });
       toast({
         title: 'Erro',
         description: 'Não foi possível enviar a mensagem',
