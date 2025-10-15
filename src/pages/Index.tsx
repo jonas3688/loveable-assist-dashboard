@@ -17,11 +17,8 @@ const Index = () => {
     return <Navigate to="/login" replace />;
   }
 
-  if (perfil?.tipo_usuario === 'tecnico') {
-    return <Navigate to="/painel-tecnico" replace />;
-  }
-
-  return <Navigate to="/chamados" replace />;
+  // Sempre redireciona para seleção de função
+  return <Navigate to="/selecao-funcao" replace />;
 };
 
 export default Index;
