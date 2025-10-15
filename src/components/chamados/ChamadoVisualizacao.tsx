@@ -9,6 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +35,8 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
-  UserCog
+  UserCog,
+  Ban
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -50,6 +61,8 @@ export const ChamadoVisualizacao = ({
   const [novoStatus, setNovoStatus] = useState(chamado.status);
   const [transferirDialogOpen, setTransferirDialogOpen] = useState(false);
   const [tecnicoSelecionado, setTecnicoSelecionado] = useState<number | null>(null);
+  const [finalizarDialogOpen, setFinalizarDialogOpen] = useState(false);
+  const [tipoFinalizacao, setTipoFinalizacao] = useState<'concluido' | 'cancelado' | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { perfil } = useNewAuth();
@@ -83,13 +96,15 @@ export const ChamadoVisualizacao = ({
     },
   });
 
-  const atualizarChamadoMutation = useMutation({
-    mutationFn: async () => {
+  const finalizarChamadoMutation = useMutation({
+    mutationFn: async (tipo: 'concluido' | 'cancelado') => {
+      const statusFinal = tipo === 'concluido' ? 'resolvido' : 'fechado';
+      
       const { error } = await supabase
         .from("chamados")
         .update({
-          status: novoStatus,
-          solucao_aplicada: solucaoAplicada,
+          status: statusFinal,
+          solucao_aplicada: tipo === 'concluido' ? solucaoAplicada : 'Chamado cancelado',
         })
         .eq("id", chamado.id);
 
@@ -101,7 +116,9 @@ export const ChamadoVisualizacao = ({
         .insert({
           chamado_id: chamado.id,
           actor: perfil?.nome_completo || 'Sistema',
-          message: `Status alterado para: ${getStatusLabel(novoStatus)}${solucaoAplicada ? '. Solução: ' + solucaoAplicada : ''}`,
+          message: tipo === 'concluido' 
+            ? `Chamado concluído. Solução: ${solucaoAplicada}`
+            : 'Chamado cancelado',
         });
     },
     onSuccess: () => {
@@ -111,16 +128,19 @@ export const ChamadoVisualizacao = ({
       queryClient.invalidateQueries({ queryKey: ['historico-chamado', chamado.id] });
       onChamadoAtualizado?.();
       toast({
-        title: "Chamado atualizado",
-        description: `Chamado #${chamado.id} foi atualizado com sucesso.`,
+        title: "Chamado finalizado",
+        description: tipoFinalizacao === 'concluido' 
+          ? `Chamado #${chamado.id} foi concluído com sucesso.`
+          : `Chamado #${chamado.id} foi cancelado.`,
       });
+      setFinalizarDialogOpen(false);
       onClose();
     },
     onError: (error) => {
-      console.error("Erro ao atualizar chamado:", error);
+      console.error("Erro ao finalizar chamado:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o chamado.",
+        description: "Não foi possível finalizar o chamado.",
         variant: "destructive",
       });
     },
@@ -229,7 +249,7 @@ export const ChamadoVisualizacao = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-gradient-card">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden bg-gradient-card">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 text-xl">
               <div className="p-2 bg-primary/10 rounded-lg">
@@ -242,154 +262,146 @@ export const ChamadoVisualizacao = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
-            {/* Informações do Solicitante */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Informações do Solicitante
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-muted-foreground">Nome</Label>
-                  <p className="font-medium">{usuario?.nome_completo || "Não informado"}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Email</Label>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>{usuario?.email || "Não informado"}</span>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Departamento</Label>
-                  <div className="flex items-center gap-2">
-                    <Building className="w-4 h-4 text-muted-foreground" />
-                    <span>{usuario?.departamento || "Não informado"}</span>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Status</Label>
-                  <Badge variant={getStatusVariant(chamado.status)} className="gap-1">
-                    {getStatusIcon(chamado.status)}
-                    {getStatusLabel(chamado.status)}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Data de Abertura</Label>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span>
-                      {format(new Date(chamado.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Chat Component */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  Conversa
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChatComponent chamadoId={chamado.id} />
-              </CardContent>
-            </Card>
-
-            {/* Ações e Resolução (apenas para técnicos em chamados em atendimento) */}
-            {podeEditar && (
+          <div className="grid grid-cols-3 gap-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            {/* Coluna Principal (2/3) - Chat e Ações */}
+            <div className="col-span-2 space-y-4">
+              {/* Informações do Solicitante */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
-                    Resolução do Chamado
+                    <User className="w-5 h-5" />
+                    Informações do Solicitante
                   </CardTitle>
-                  <CardDescription>
-                    Descreva a solução e altere o status do chamado
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="solucao">Solução Aplicada</Label>
-                    <Textarea
-                      id="solucao"
-                      placeholder="Descreva a solução aplicada..."
-                      value={solucaoAplicada}
-                      onChange={(e) => setSolucaoAplicada(e.target.value)}
-                      className="min-h-[100px] mt-2"
-                    />
+                    <Label className="text-sm text-muted-foreground">Nome</Label>
+                    <p className="font-medium">{usuario?.nome_completo || "Não informado"}</p>
                   </div>
-
                   <div>
-                    <Label htmlFor="status">Alterar Status</Label>
-                    <Select value={novoStatus} onValueChange={setNovoStatus}>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="em_atendimento">Em Atendimento</SelectItem>
-                        <SelectItem value="resolvido">Resolvido</SelectItem>
-                        <SelectItem value="fechado">Fechado</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-sm text-muted-foreground">Email</Label>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <span>{usuario?.email || "Não informado"}</span>
+                    </div>
                   </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => atualizarChamadoMutation.mutate()}
-                      disabled={atualizarChamadoMutation.isPending}
-                      className="flex-1"
-                    >
-                      {atualizarChamadoMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setTransferirDialogOpen(true)}
-                    >
-                      <UserCog className="w-4 h-4 mr-2" />
-                      Transferir
-                    </Button>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Departamento</Label>
+                    <div className="flex items-center gap-2">
+                      <Building className="w-4 h-4 text-muted-foreground" />
+                      <span>{usuario?.departamento || "Não informado"}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground mb-2 block">Status</Label>
+                    <Badge variant={getStatusVariant(chamado.status)} className="gap-2">
+                      {getStatusIcon(chamado.status)}
+                      {getStatusLabel(chamado.status)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Data de Abertura</Label>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        {format(new Date(chamado.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
 
-            {/* Histórico */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
-                  Histórico de Atividades
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {historico && historico.length > 0 ? (
-                  <div className="space-y-3">
-                    {historico.map((item: any) => (
-                      <div key={item.id} className="flex gap-3 pb-3 border-b last:border-0">
-                        <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{item.message}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.actor} • {format(new Date(item.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          </p>
+              {/* Chat Component */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    Conversa
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChatComponent chamadoId={chamado.id} />
+                </CardContent>
+              </Card>
+
+              {/* Solução e Ações (apenas para técnicos em chamados em atendimento) */}
+              {podeEditar && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      Resolução do Chamado
+                    </CardTitle>
+                    <CardDescription>
+                      Descreva a solução aplicada ao problema
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="solucao">Solução Aplicada</Label>
+                      <Textarea
+                        id="solucao"
+                        placeholder="Descreva detalhadamente a solução aplicada..."
+                        value={solucaoAplicada}
+                        onChange={(e) => setSolucaoAplicada(e.target.value)}
+                        className="min-h-[120px] mt-2"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setTransferirDialogOpen(true)}
+                        className="flex-1"
+                      >
+                        <UserCog className="w-4 h-4 mr-2" />
+                        Transferir Chamado
+                      </Button>
+                      <Button
+                        onClick={() => setFinalizarDialogOpen(true)}
+                        className="flex-1"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Finalizar Chamado
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Coluna Lateral (1/3) - Histórico */}
+            <div className="col-span-1">
+              <Card className="sticky top-0">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
+                    Histórico de Atividades
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="max-h-[calc(90vh-280px)] overflow-y-auto">
+                  {historico && historico.length > 0 ? (
+                    <div className="space-y-3">
+                      {historico.map((item: any) => (
+                        <div key={item.id} className="flex gap-3 pb-3 border-b last:border-0">
+                          <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium break-words">{item.message}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.actor} • {format(new Date(item.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhuma atividade registrada
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nenhuma atividade registrada
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           <DialogFooter>
@@ -442,6 +454,60 @@ export const ChamadoVisualizacao = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Finalização */}
+      <AlertDialog open={finalizarDialogOpen} onOpenChange={setFinalizarDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Como deseja finalizar este chamado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Escolha uma das opções abaixo para finalizar o atendimento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-3 py-4">
+            <Button
+              variant="default"
+              onClick={() => {
+                setTipoFinalizacao('concluido');
+                finalizarChamadoMutation.mutate('concluido');
+              }}
+              disabled={!solucaoAplicada.trim() || finalizarChamadoMutation.isPending}
+              className="w-full justify-start h-auto py-4"
+            >
+              <CheckCircle className="w-5 h-5 mr-3" />
+              <div className="text-left">
+                <div className="font-semibold">Chamado Concluído</div>
+                <div className="text-xs opacity-90">Problema resolvido com sucesso</div>
+              </div>
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setTipoFinalizacao('cancelado');
+                finalizarChamadoMutation.mutate('cancelado');
+              }}
+              disabled={finalizarChamadoMutation.isPending}
+              className="w-full justify-start h-auto py-4"
+            >
+              <Ban className="w-5 h-5 mr-3" />
+              <div className="text-left">
+                <div className="font-semibold">Chamado Cancelado</div>
+                <div className="text-xs opacity-90">Cancelar este atendimento</div>
+              </div>
+            </Button>
+            {!solucaoAplicada.trim() && (
+              <p className="text-xs text-destructive text-center">
+                * É necessário preencher a solução para concluir o chamado
+              </p>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={finalizarChamadoMutation.isPending}>
+              Voltar
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
