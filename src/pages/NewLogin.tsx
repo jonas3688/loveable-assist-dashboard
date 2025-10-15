@@ -21,7 +21,7 @@ export default function NewLogin() {
   useEffect(() => {
     // Redirecionar se já estiver logado
     if (user) {
-      navigate('/chamados');
+      navigate('/selecao-funcao');
     }
   }, [user, navigate]);
 

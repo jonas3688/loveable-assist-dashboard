@@ -28,13 +28,7 @@ export default function SelecaoFuncao() {
       icone: ClipboardList,
       rota: '/chamados',
       cor: 'bg-blue-500',
-    },
-    {
-      titulo: 'Novo Chamado',
-      descricao: 'Abrir um novo chamado de suporte',
-      icone: Plus,
-      rota: '/chamados',
-      cor: 'bg-green-500',
+      id: 'meus-chamados',
     },
   ];
 
@@ -46,6 +40,7 @@ export default function SelecaoFuncao() {
       icone: Wrench,
       rota: '/painel-tecnico',
       cor: 'bg-purple-500',
+      id: 'painel-tecnico',
     },
   ];
 
@@ -57,6 +52,7 @@ export default function SelecaoFuncao() {
       icone: Users,
       rota: '/cadastro-funcionarios',
       cor: 'bg-orange-500',
+      id: 'gerenciar-funcionarios',
     },
     {
       titulo: 'Dashboards',
@@ -64,6 +60,7 @@ export default function SelecaoFuncao() {
       icone: BarChart3,
       rota: '/dashboards',
       cor: 'bg-pink-500',
+      id: 'dashboards',
     },
   ];
 
@@ -94,7 +91,7 @@ export default function SelecaoFuncao() {
             const Icon = funcao.icone;
             return (
               <Card 
-                key={funcao.rota}
+                key={funcao.id}
                 className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] bg-card border"
                 onClick={() => navigate(funcao.rota)}
               >
