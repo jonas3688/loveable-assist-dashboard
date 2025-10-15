@@ -243,7 +243,7 @@ export const ChamadoVisualizacao = ({
     }
   };
 
-  const podeEditar = chamado.status === "em_atendimento";
+  const podeEditar = chamado.status === "em_atendimento" && perfil?.tipo_usuario === 'tecnico';
   const usuario = Array.isArray(chamado.usuarios) ? chamado.usuarios[0] : chamado.usuarios;
 
   return (
@@ -263,7 +263,7 @@ export const ChamadoVisualizacao = ({
           </DialogHeader>
 
           <div className="grid grid-cols-3 gap-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-            {/* Coluna Principal (2/3) - Chat e Ações */}
+            {/* Coluna Principal (2/3) - Informações, Chat e Ações */}
             <div className="col-span-2 space-y-4">
               {/* Informações do Solicitante */}
               <Card>
@@ -324,49 +324,50 @@ export const ChamadoVisualizacao = ({
                 </CardContent>
               </Card>
 
-              {/* Solução e Ações (apenas para técnicos em chamados em atendimento) */}
+              {/* Ações do Técnico - Apenas quando em atendimento */}
               {podeEditar && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
-                      Resolução do Chamado
-                    </CardTitle>
-                    <CardDescription>
-                      Descreva a solução aplicada ao problema
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="solucao">Solução Aplicada</Label>
+                <>
+                  {/* Campo de Solução */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5" />
+                        Solução Aplicada
+                      </CardTitle>
+                      <CardDescription>
+                        Descreva a solução aplicada ao problema
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
                       <Textarea
                         id="solucao"
                         placeholder="Descreva detalhadamente a solução aplicada..."
                         value={solucaoAplicada}
                         onChange={(e) => setSolucaoAplicada(e.target.value)}
-                        className="min-h-[120px] mt-2"
+                        className="min-h-[120px]"
                       />
-                    </div>
+                    </CardContent>
+                  </Card>
 
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setTransferirDialogOpen(true)}
-                        className="flex-1"
-                      >
-                        <UserCog className="w-4 h-4 mr-2" />
-                        Transferir Chamado
-                      </Button>
-                      <Button
-                        onClick={() => setFinalizarDialogOpen(true)}
-                        className="flex-1"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Finalizar Chamado
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  {/* Botões de Ação */}
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setTransferirDialogOpen(true)}
+                      className="flex-1"
+                    >
+                      <UserCog className="w-4 h-4 mr-2" />
+                      Transferir Chamado
+                    </Button>
+                    <Button
+                      onClick={() => setFinalizarDialogOpen(true)}
+                      className="flex-1"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Finalizar Chamado
+                    </Button>
+                  </div>
+                </>
               )}
             </div>
 

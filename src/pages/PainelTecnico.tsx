@@ -169,10 +169,28 @@ export default function PainelTecnico() {
     if (!user?.id) return;
 
     try {
+      // Chama webhook para assumir chamado
       await webhookService.assumirChamado({
         conversation_id: chamadoId,
         tecnico_id: user.id,
       });
+
+      // Registra no histórico que o técnico assumiu o chamado
+      const { data: tecnicoData } = await supabase
+        .from('usuarios')
+        .select('nome_completo')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (tecnicoData) {
+        await supabase
+          .from('chamados_ti_historico')
+          .insert({
+            chamado_id: chamadoId,
+            actor: tecnicoData.nome_completo,
+            message: `Técnico ${tecnicoData.nome_completo} assumiu o chamado`,
+          });
+      }
 
       toast({
         title: 'Sucesso',
