@@ -72,9 +72,8 @@ export const ChamadoVisualizacao = ({
     queryKey: ['tecnicos-disponiveis'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('usuarios')
-        .select('id_usuario, nome_completo')
-        .eq('tipo_usuario', 'tecnico');
+        .from('funcionarios_ti')
+        .select('id, nome');
       
       if (error) throw error;
       return data;
@@ -83,12 +82,12 @@ export const ChamadoVisualizacao = ({
 
   // Query para buscar histórico
   const { data: historico } = useQuery({
-    queryKey: ['historico-chamado', chamado.id],
+    queryKey: ['historico-chamado', chamado.id_chamado],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('chamados_ti_historico')
         .select('*')
-        .eq('chamado_id', chamado.id)
+        .eq('chamado_id', chamado.id_chamado)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -101,12 +100,12 @@ export const ChamadoVisualizacao = ({
       const statusFinal = tipo === 'concluido' ? 'resolvido' : 'fechado';
       
       const { error } = await supabase
-        .from("chamados")
+        .from("chamados_ti")
         .update({
           status: statusFinal,
           solucao_aplicada: tipo === 'concluido' ? solucaoAplicada : 'Chamado cancelado',
         })
-        .eq("id", chamado.id);
+        .eq("id_chamado", chamado.id_chamado);
 
       if (error) throw error;
 
@@ -114,7 +113,7 @@ export const ChamadoVisualizacao = ({
       await supabase
         .from('chamados_ti_historico')
         .insert({
-          chamado_id: chamado.id,
+          chamado_id: chamado.id_chamado,
           actor: perfil?.nome_completo || 'Sistema',
           message: tipo === 'concluido' 
             ? `Chamado concluído. Solução: ${solucaoAplicada}`
@@ -125,13 +124,13 @@ export const ChamadoVisualizacao = ({
       queryClient.invalidateQueries({ queryKey: ['fila-atendimento'] });
       queryClient.invalidateQueries({ queryKey: ['meus-chamados-tecnico'] });
       queryClient.invalidateQueries({ queryKey: ['historico-completo'] });
-      queryClient.invalidateQueries({ queryKey: ['historico-chamado', chamado.id] });
+      queryClient.invalidateQueries({ queryKey: ['historico-chamado', chamado.id_chamado] });
       onChamadoAtualizado?.();
       toast({
         title: "Chamado finalizado",
         description: tipoFinalizacao === 'concluido' 
-          ? `Chamado #${chamado.id} foi concluído com sucesso.`
-          : `Chamado #${chamado.id} foi cancelado.`,
+          ? `Chamado #${chamado.id_chamado} foi concluído com sucesso.`
+          : `Chamado #${chamado.id_chamado} foi cancelado.`,
       });
       setFinalizarDialogOpen(false);
       onClose();
@@ -151,35 +150,35 @@ export const ChamadoVisualizacao = ({
       if (!tecnicoSelecionado) return;
 
       const { error } = await supabase
-        .from("chamados")
+        .from("chamados_ti")
         .update({
-          tecnico_id: tecnicoSelecionado,
+          assigned_func_ti_id: tecnicoSelecionado,
         })
-        .eq("id", chamado.id);
+        .eq("id_chamado", chamado.id_chamado);
 
       if (error) throw error;
 
       // Buscar nome do novo técnico
       const { data: novoTecnico } = await supabase
-        .from('usuarios')
-        .select('nome_completo')
-        .eq('id_usuario', tecnicoSelecionado)
+        .from('funcionarios_ti')
+        .select('nome')
+        .eq('id', tecnicoSelecionado)
         .single();
 
       // Adicionar ao histórico
       await supabase
         .from('chamados_ti_historico')
         .insert({
-          chamado_id: chamado.id,
+          chamado_id: chamado.id_chamado,
           actor: perfil?.nome_completo || 'Sistema',
-          message: `Chamado transferido para: ${novoTecnico?.nome_completo || 'Técnico'}`,
+          message: `Chamado transferido para: ${novoTecnico?.nome || 'Técnico'}`,
         });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fila-atendimento'] });
       queryClient.invalidateQueries({ queryKey: ['meus-chamados-tecnico'] });
       queryClient.invalidateQueries({ queryKey: ['historico-completo'] });
-      queryClient.invalidateQueries({ queryKey: ['historico-chamado', chamado.id] });
+      queryClient.invalidateQueries({ queryKey: ['historico-chamado', chamado.id_chamado] });
       onChamadoAtualizado?.();
       toast({
         title: "Chamado transferido",
@@ -244,7 +243,7 @@ export const ChamadoVisualizacao = ({
   };
 
   const podeEditar = chamado.status === "em_atendimento" && perfil?.tipo_usuario === 'tecnico';
-  const usuario = Array.isArray(chamado.usuarios) ? chamado.usuarios[0] : chamado.usuarios;
+  const funcionario = chamado.funcionario;
 
   return (
     <>
@@ -255,10 +254,10 @@ export const ChamadoVisualizacao = ({
               <div className="p-2 bg-primary/10 rounded-lg">
                 {getStatusIcon(chamado.status)}
               </div>
-              Chamado #{chamado.id}
+              Chamado #{chamado.id_chamado}
             </DialogTitle>
             <DialogDescription>
-              {chamado.titulo || 'Detalhes do chamado'}
+              {chamado.descricao_problema || 'Detalhes do chamado'}
             </DialogDescription>
           </DialogHeader>
 
@@ -276,20 +275,20 @@ export const ChamadoVisualizacao = ({
                 <CardContent className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm text-muted-foreground">Nome</Label>
-                    <p className="font-medium">{usuario?.nome_completo || "Não informado"}</p>
+                    <p className="font-medium">{funcionario?.nome || chamado.nome_funcionario || "Não informado"}</p>
                   </div>
                   <div>
                     <Label className="text-sm text-muted-foreground">Email</Label>
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span>{usuario?.email || "Não informado"}</span>
+                      <span>{funcionario?.email || chamado.email || "Não informado"}</span>
                     </div>
                   </div>
                   <div>
-                    <Label className="text-sm text-muted-foreground">Departamento</Label>
+                    <Label className="text-sm text-muted-foreground">Loja</Label>
                     <div className="flex items-center gap-2">
                       <Building className="w-4 h-4 text-muted-foreground" />
-                      <span>{usuario?.departamento || "Não informado"}</span>
+                      <span>{chamado.loja || "Não informado"}</span>
                     </div>
                   </div>
                   <div>
@@ -320,7 +319,7 @@ export const ChamadoVisualizacao = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ChatComponent chamadoId={chamado.id} />
+                  <ChatComponent chamadoId={chamado.id_chamado} />
                 </CardContent>
               </Card>
 
@@ -434,8 +433,8 @@ export const ChamadoVisualizacao = ({
                 </SelectTrigger>
                 <SelectContent>
                   {tecnicos?.map((tecnico) => (
-                    <SelectItem key={tecnico.id_usuario} value={tecnico.id_usuario.toString()}>
-                      {tecnico.nome_completo}
+                    <SelectItem key={tecnico.id} value={tecnico.id.toString()}>
+                      {tecnico.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>

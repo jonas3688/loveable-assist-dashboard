@@ -33,13 +33,16 @@ export default function PainelTecnico() {
     queryKey: ['fila-atendimento'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('chamados')
+        .from('chamados_ti')
         .select(`
           *,
-          usuarios:usuario_id (
-            nome_completo,
+          funcionario:funcionario_id (
+            nome,
             email,
             departamento
+          ),
+          loja:loja_id (
+            nome
           )
         `)
         .eq('status', 'aberto')
@@ -65,16 +68,20 @@ export default function PainelTecnico() {
       if (!perfilData) return [];
 
       const { data, error } = await supabase
-        .from('chamados')
+        .from('chamados_ti')
         .select(`
           *,
-          usuarios:usuario_id (
-            nome_completo,
+          funcionario:funcionario_id (
+            nome,
             email,
             departamento
+          ),
+          loja:loja_id (
+            nome
           )
         `)
-        .eq('tecnico_id', perfilData.id_usuario)
+        .eq('assigned_func_ti_id', perfilData.id_usuario)
+        .eq('status', 'em_atendimento')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -88,16 +95,19 @@ export default function PainelTecnico() {
     queryKey: ['historico-completo', filtroStatus, busca],
     queryFn: async () => {
       let query = supabase
-        .from('chamados')
+        .from('chamados_ti')
         .select(`
           *,
-          usuarios:usuario_id (
-            nome_completo,
+          funcionario:funcionario_id (
+            nome,
             email,
             departamento
           ),
-          tecnico:tecnico_id (
-            nome_completo
+          tecnico:assigned_func_ti_id (
+            nome
+          ),
+          loja:loja_id (
+            nome
           )
         `)
         .order('created_at', { ascending: false });
@@ -112,8 +122,9 @@ export default function PainelTecnico() {
       // Filtrar por busca no frontend
       if (busca) {
         return data?.filter((c: any) =>
-          c.titulo?.toLowerCase().includes(busca.toLowerCase()) ||
-          c.usuarios?.nome_completo?.toLowerCase().includes(busca.toLowerCase())
+          c.descricao_problema?.toLowerCase().includes(busca.toLowerCase()) ||
+          c.funcionario?.nome?.toLowerCase().includes(busca.toLowerCase()) ||
+          c.nome_funcionario?.toLowerCase().includes(busca.toLowerCase())
         );
       }
 
@@ -131,7 +142,7 @@ export default function PainelTecnico() {
         {
           event: '*',
           schema: 'public',
-          table: 'chamados',
+          table: 'chamados_ti',
           filter: 'status=eq.aberto',
         },
         (payload) => {
@@ -149,7 +160,7 @@ export default function PainelTecnico() {
         {
           event: '*',
           schema: 'public',
-          table: 'chamados',
+          table: 'chamados_ti',
         },
         (payload) => {
           console.log('Histórico atualizado:', payload);
@@ -169,28 +180,34 @@ export default function PainelTecnico() {
     if (!user?.id) return;
 
     try {
-      // Chama webhook para assumir chamado
-      await webhookService.assumirChamado({
-        conversation_id: chamadoId,
-        tecnico_id: user.id,
-      });
-
-      // Registra no histórico que o técnico assumiu o chamado
+      // Buscar dados do técnico
       const { data: tecnicoData } = await supabase
         .from('usuarios')
-        .select('nome_completo')
+        .select('id_usuario, nome_completo')
         .eq('auth_user_id', user.id)
         .single();
 
-      if (tecnicoData) {
-        await supabase
-          .from('chamados_ti_historico')
-          .insert({
-            chamado_id: chamadoId,
-            actor: tecnicoData.nome_completo,
-            message: `Técnico ${tecnicoData.nome_completo} assumiu o chamado`,
-          });
-      }
+      if (!tecnicoData) throw new Error('Técnico não encontrado');
+
+      // Atualizar chamado para em_atendimento e atribuir técnico
+      const { error: updateError } = await supabase
+        .from('chamados_ti')
+        .update({
+          status: 'em_atendimento',
+          assigned_func_ti_id: tecnicoData.id_usuario,
+        })
+        .eq('id_chamado', chamadoId);
+
+      if (updateError) throw updateError;
+
+      // Registrar no histórico
+      await supabase
+        .from('chamados_ti_historico')
+        .insert({
+          chamado_id: chamadoId,
+          actor: tecnicoData.nome_completo,
+          message: `Técnico ${tecnicoData.nome_completo} assumiu o chamado`,
+        });
 
       toast({
         title: 'Sucesso',
