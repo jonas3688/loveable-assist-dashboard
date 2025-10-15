@@ -293,7 +293,7 @@ export const ChamadoVisualizacao = ({
                     </div>
                   </div>
                   <div>
-                    <Label className="text-sm text-muted-foreground mb-2 block">Status</Label>
+                    <Label className="text-sm text-muted-foreground mb-3 block">Status</Label>
                     <Badge variant={getStatusVariant(chamado.status)} className="gap-2">
                       {getStatusIcon(chamado.status)}
                       {getStatusLabel(chamado.status)}

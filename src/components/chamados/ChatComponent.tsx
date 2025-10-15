@@ -166,9 +166,14 @@ export function ChatComponent({ chamadoId, onChamadoCreated }: ChatComponentProp
             </div>
           ) : mensagens && mensagens.length > 0 ? (
             mensagens.map((msg: any) => {
-              // Mensagens do sistema ou técnico ficam à esquerda, do usuário à direita
-              const isOwn = msg.tipo_remetente === 'usuario' && msg.remetente_id === perfil?.id_usuario;
               const usuario = Array.isArray(msg.usuarios) ? msg.usuarios[0] : msg.usuarios;
+              
+              // Para técnicos: mensagens do sistema e técnico à direita (azul), usuário à esquerda (cinza)
+              // Para usuários: suas mensagens à direita (azul), sistema e técnico à esquerda (cinza)
+              const isTecnicoView = perfil?.tipo_usuario === 'tecnico';
+              const isOwn = isTecnicoView 
+                ? (msg.tipo_remetente === 'sistema' || msg.tipo_remetente === 'tecnico')
+                : (msg.tipo_remetente === 'usuario' && msg.remetente_id === perfil?.id_usuario);
               
               return (
                 <div
@@ -186,7 +191,6 @@ export function ChatComponent({ chamadoId, onChamadoCreated }: ChatComponentProp
                       {msg.tipo_remetente === 'sistema' 
                         ? 'Sistema' 
                         : usuario?.nome_completo || 'Usuário'}
-                      {usuario?.tipo_usuario === 'tecnico' && ' (Técnico)'}
                     </div>
                     <div className="text-sm">{msg.conteudo_mensagem}</div>
                     <div className="text-xs opacity-70 mt-1">
