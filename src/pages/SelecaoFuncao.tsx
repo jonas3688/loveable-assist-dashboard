@@ -82,28 +82,28 @@ export default function SelecaoFuncao() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Bem-vindo, {perfil?.nome_completo}!</h1>
           <p className="text-muted-foreground">O que você gostaria de fazer?</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex flex-col gap-4 mb-8">
           {funcoes.map((funcao) => {
             const Icon = funcao.icone;
             return (
               <Card 
                 key={funcao.rota}
-                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 bg-gradient-card"
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] bg-card border"
                 onClick={() => navigate(funcao.rota)}
               >
-                <CardHeader>
-                  <div className={`w-12 h-12 ${funcao.cor} rounded-lg flex items-center justify-center mb-4`}>
+                <CardHeader className="pb-3">
+                  <div className={`w-12 h-12 ${funcao.cor} rounded-lg flex items-center justify-center mb-3`}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
-                  <CardTitle>{funcao.titulo}</CardTitle>
-                  <CardDescription>{funcao.descricao}</CardDescription>
+                  <CardTitle className="text-lg">{funcao.titulo}</CardTitle>
+                  <CardDescription className="text-sm">{funcao.descricao}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button className="w-full">Acessar</Button>
@@ -113,7 +113,7 @@ export default function SelecaoFuncao() {
           })}
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="text-center">
           <Button variant="outline" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-2" />
             Sair
